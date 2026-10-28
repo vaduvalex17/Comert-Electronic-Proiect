@@ -1,0 +1,232 @@
+{# catalog/templates/catalog/admin/admin_dashboard.html #}
+{# Panou de control și statistici agregate pentru administratori (Bonus Faza 9) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Panou Control — Statistici & KPI{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Antet Panou Admin #}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger text-white px-2 py-1">ADMINISTRATOR</span>
+                <h1 class="h3 fw-bold mb-0">Dashboard & Rapoarte Statistice</h1>
+            </div>
+            <p class="text-muted small mb-0">
+                Sinteza indicatorilor financiari, volumului de vânzări și a performanței magazinului.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'catalog:admin_produse_lista' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-boxes me-1"></i> Gestiune Produse
+            </a>
+            <a href="{% url 'cumparaturi:admin_comenzi_lista' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-receipt me-1"></i> Gestiune Comenzi
+            </a>
+        </div>
+    </div>
+
+    {# 4 Carduri KPI Principale #}
+    <div class="row g-3 mb-4">
+        {# Venituri #}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Venituri Totale</span>
+                    <div class="bg-success-subtle text-success rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="bi bi-cash-stack fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-4 fw-bold text-dark mb-0">{{ venituri_totale }} <span class="fs-6 text-muted">lei</span></div>
+                <small class="text-success mt-1 d-block"><i class="bi bi-check-circle me-1"></i>Comenzi active</small>
+            </div>
+        </div>
+
+        {# Total Comenzi #}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Comenzi Plasate</span>
+                    <div class="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="bi bi-bag-check fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-4 fw-bold text-dark mb-0">{{ total_comenzi }}</div>
+                <small class="text-primary mt-1 d-block"><i class="bi bi-arrow-repeat me-1"></i>Total istoric</small>
+            </div>
+        </div>
+
+        {# Clienți #}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Clienți Înregistrați</span>
+                    <div class="bg-info-subtle text-info rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="bi bi-people fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-4 fw-bold text-dark mb-0">{{ total_clienti }}</div>
+                <small class="text-muted mt-1 d-block">Utilizatori non-staff</small>
+            </div>
+        </div>
+
+        {# Produse Active #}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-semibold">Produse Active</span>
+                    <div class="bg-warning-subtle text-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="bi bi-box-seam fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-4 fw-bold text-dark mb-0">{{ total_produse }}</div>
+                <small class="text-muted mt-1 d-block">Vizibile în catalog</small>
+            </div>
+        </div>
+    </div>
+
+    {# Rândul 2: Top Produse & Starea Comenzilor + Alerte de Inventar #}
+    <div class="row g-4 mb-4">
+        {# Top 5 Produse #}
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-trophy text-warning me-2"></i>Top 5 Cele Mai Vândute Produse
+                </h5>
+                {% if top_produse %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Produs</th>
+                                    <th class="text-center" style="width: 110px;">Bucăți</th>
+                                    <th class="text-end" style="width: 140px;">Venit Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in top_produse %}
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold text-dark">{{ item.nume_produs }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary px-2 py-1">{{ item.bucati }} buc.</span>
+                                        </td>
+                                        <td class="text-end fw-bold text-dark">
+                                            {{ item.venit }} lei
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-2 opacity-50 d-block mb-2"></i>
+                        <p class="mb-0 small">Nu există suficiente date din comenzi pentru a genera topul vânzărilor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Distribuție Status & Alerte Inventar #}
+        <div class="col-lg-5">
+            {# Status Comenzi #}
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-3">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-pie-chart text-primary me-2"></i>Starea Comenzilor
+                </h5>
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded-3">
+                    <span class="small fw-semibold"><i class="bi bi-dot text-info fs-5 me-1"></i>Plasate</span>
+                    <span class="badge bg-info text-dark">{{ status_statistici.plasata }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded-3">
+                    <span class="small fw-semibold"><i class="bi bi-dot text-warning fs-5 me-1"></i>În procesare</span>
+                    <span class="badge bg-warning text-dark">{{ status_statistici.in_procesare }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded-3">
+                    <span class="small fw-semibold"><i class="bi bi-dot text-success fs-5 me-1"></i>Livrate</span>
+                    <span class="badge bg-success">{{ status_statistici.livrata }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
+                    <span class="small fw-semibold"><i class="bi bi-dot text-danger fs-5 me-1"></i>Anulate</span>
+                    <span class="badge bg-danger">{{ status_statistici.anulata }}</span>
+                </div>
+            </div>
+
+            {# Alerte Inventar #}
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+                <h6 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-exclamation-diamond text-danger me-2"></i>Alerte Stoc Depozit
+                </h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Stoc epuizat (0 buc.):</span>
+                    <span class="badge {% if stoc_epuizat > 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                        {{ stoc_epuizat }} produse
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Stoc critic (1-5 buc.):</span>
+                    <span class="badge {% if stoc_critic > 0 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                        {{ stoc_critic }} produse
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Rândul 3: Ultimele Comenzi Plasate #}
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-clock-history text-primary me-2"></i>Ultimele Comenzi Înregistrate
+            </h5>
+            <a href="{% url 'cumparaturi:admin_comenzi_lista' %}" class="btn btn-outline-primary btn-sm">
+                Vezi toate comenzile &raquo;
+            </a>
+        </div>
+        {% if ultimele_comenzi %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Data</th>
+                            <th>Client & Destinatar</th>
+                            <th>Oraș</th>
+                            <th>Livrare</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cmd in ultimele_comenzi %}
+                            <tr>
+                                <td class="fw-bold text-primary">#{{ cmd.id }}</td>
+                                <td>{{ cmd.creata_la|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ cmd.nume_destinatar }}</div>
+                                    <small class="text-muted">{{ cmd.utilizator.username }}</small>
+                                </td>
+                                <td>{{ cmd.oras }}</td>
+                                <td>
+                                    <span class="badge bg-light text-muted border">{{ cmd.modalitate_livrare.nume }}</span>
+                                </td>
+                                <td class="text-end fw-bold text-dark">{{ cmd.total }} lei</td>
+                                <td class="text-center">
+                                    <span class="badge {% if cmd.status == 'livrata' %}bg-success{% elif cmd.status == 'in_procesare' %}bg-warning text-dark{% elif cmd.status == 'anulata' %}bg-danger{% else %}bg-info text-dark{% endif %}">
+                                        {{ cmd.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0">Nu s-a înregistrat încă nicio comandă în magazin.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

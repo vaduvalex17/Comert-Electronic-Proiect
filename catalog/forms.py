@@ -9,7 +9,7 @@ Gestionează încărcarea imaginilor, selecția furnizorului, categoriei și met
 from decimal import Decimal
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Categorie, Furnizor, ModalitateLivrare, Produs
+from .models import Categorie, Furnizor, ModalitateLivrare, Produs, Recenzie
 
 
 class ProdusForm(forms.ModelForm):
@@ -92,3 +92,36 @@ class ProdusForm(forms.ModelForm):
         if stoc is not None and stoc < 0:
             raise ValidationError("Stocul nu poate fi un număr negativ.")
         return stoc
+
+
+class RecenzieForm(forms.ModelForm):
+    """Formular pentru lăsarea unei recenzii și note de către cumpărătorii verificați (Bonus)."""
+
+    RATING_OPTIUNI = [
+        (5, '★★★★★ (5 stele - Excelent)'),
+        (4, '★★★★☆ (4 stele - Foarte bun)'),
+        (3, '★★★☆☆ (3 stele - Mediu)'),
+        (2, '★★☆☆☆ (2 stele - Nemulțumitor)'),
+        (1, '★☆☆☆☆ (1 stea - Slab)'),
+    ]
+
+    rating = forms.ChoiceField(
+        choices=RATING_OPTIUNI,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Notă acordată"
+    )
+
+    class Meta:
+        model = Recenzie
+        fields = ['rating', 'titlu', 'comentariu']
+        widgets = {
+            'titlu': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'ex: Recomand cu căldură, performanță impecabilă!'
+            }),
+            'comentariu': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Împărtășește experiența ta cu acest produs (calitate, livrare, fiabilitate)...'
+            }),
+        }

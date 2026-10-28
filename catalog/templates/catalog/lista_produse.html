@@ -1,52 +1,187 @@
 {# catalog/templates/catalog/lista_produse.html #}
-{# Lista tuturor produselor din magazin, cu bară de căutare și paginare #}
+{# Catalog complet de produse cu căutare, paginare și filtrare avansată (operatori logici ȘI / SAU) #}
 {% extends "baza.html" %}
 
 {% block titlu %}{{ titlu }}{% endblock %}
 
 {% block continut %}
-<div class="container">
-    {# Bara de navigare ierarhică (Breadcrumb) #}
+<div class="container py-3">
+    {# Breadcrumb #}
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Produse</li>
+            <li class="breadcrumb-item active" aria-current="page">Catalog Produse</li>
             {% if termen_cautare %}
                 <li class="breadcrumb-item active" aria-current="page">Căutare: "{{ termen_cautare }}"</li>
             {% endif %}
         </ol>
     </nav>
 
-    {# Antet pagină cu bară de căutare dedicată #}
-    <div class="bg-white p-4 rounded-3 shadow-sm border mb-4">
-        <div class="row align-items-center">
-            <div class="col-md-6 mb-3 mb-md-0">
-                <h1 class="h3 fw-bold mb-1">
-                    {% if termen_cautare %}
-                        Rezultate căutare: <span class="text-primary">"{{ termen_cautare }}"</span>
-                    {% else %}
-                        Catalog Produse
-                    {% endif %}
-                </h1>
+    {# Antet pagină & Formular Căutare Rapidă #}
+    <div class="bg-white p-4 rounded-4 shadow-sm border mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-6">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h1 class="h3 fw-bold mb-0">
+                        {% if termen_cautare %}
+                            Rezultate pentru: <span class="text-primary">"{{ termen_cautare }}"</span>
+                        {% else %}
+                            Catalog Echipamente & IT
+                        {% endif %}
+                    </h1>
+                </div>
                 <p class="text-muted small mb-0">
-                    {{ total_rezultate }} {% if total_rezultate == 1 %}produs găsit{% else %}produse disponibile{% endif %}
+                    {{ total_rezultate }} {% if total_rezultate == 1 %}produs găsit{% else %}produse disponibile{% endif %} conform filtrelor selectate.
                 </p>
             </div>
-            <div class="col-md-6">
-                <form method="get" action="{% url 'catalog:lista_produse' %}">
-                    <div class="input-group">
-                        <input type="search" name="q" value="{{ termen_cautare }}" class="form-control" placeholder="Caută după nume sau specificații..." aria-label="Caută produse">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="bi bi-search me-1"></i> Caută
-                        </button>
-                        {% if termen_cautare %}
-                            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-outline-secondary" title="Resetează căutarea">
-                                <i class="bi bi-x-lg"></i>
-                            </a>
+
+            <div class="col-lg-6">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary fw-semibold d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#panouFiltrare" aria-expanded="{% if are_filtre_active %}true{% else %}false{% endif %}" aria-controls="panouFiltrare">
+                        <i class="bi bi-funnel-fill"></i>
+                        <span>Filtrare Avansată</span>
+                        {% if are_filtre_active %}
+                            <span class="badge bg-primary rounded-pill">Active</span>
                         {% endif %}
-                    </div>
-                </form>
+                    </button>
+
+                    {# Formular rapid doar cu q #}
+                    <form method="get" action="{% url 'catalog:lista_produse' %}" class="flex-grow-1">
+                        <div class="input-group">
+                            <input type="search" name="q" value="{{ termen_cautare }}" class="form-control" placeholder="Caută denumire sau specificații..." aria-label="Caută produse">
+                            <button class="btn btn-primary" type="submit" title="Caută">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
+        </div>
+
+        {# Panou Colapsabil: Filtrare Avansată cu Operatori Logici ȘI / SAU (Bonus Faza 9) #}
+        <div class="collapse {% if are_filtre_active %}show{% endif %} mt-4 pt-4 border-top" id="panouFiltrare">
+            <form method="get" action="{% url 'catalog:lista_produse' %}" id="formFiltrare">
+                {# Păstrăm termenul de căutare dacă există #}
+                {% if termen_cautare %}
+                    <input type="hidden" name="q" value="{{ termen_cautare }}">
+                {% endif %}
+
+                <div class="row g-3">
+                    {# Categorie #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-grid me-1 text-primary"></i>Categorie
+                        </label>
+                        <select name="categorie" class="form-select form-select-sm">
+                            <option value="">Toate categoriile</option>
+                            {% for c in categorii %}
+                                <option value="{{ c.id }}" {% if categorie_selectata == c.id %}selected{% endif %}>
+                                    {{ c.nume }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Furnizor #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-building me-1 text-primary"></i>Furnizor
+                        </label>
+                        <select name="furnizor" class="form-select form-select-sm">
+                            <option value="">Toți furnizorii</option>
+                            {% for f in furnizori %}
+                                <option value="{{ f.id }}" {% if furnizor_selectat == f.id %}selected{% endif %}>
+                                    {{ f.nume }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Modalitate Livrare #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-truck me-1 text-primary"></i>Suportă livrare prin
+                        </label>
+                        <select name="livrare" class="form-select form-select-sm">
+                            <option value="">Oricare modalitate</option>
+                            {% for liv in modalitati_livrare %}
+                                <option value="{{ liv.id }}" {% if livrare_selectata == liv.id %}selected{% endif %}>
+                                    {{ liv.nume }} ({{ liv.cost }} lei)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# Sortare #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-sort-down me-1 text-primary"></i>Ordonează după
+                        </label>
+                        <select name="sortare" class="form-select form-select-sm">
+                            <option value="nou" {% if sortare == 'nou' %}selected{% endif %}>Cele mai noi</option>
+                            <option value="pret_asc" {% if sortare == 'pret_asc' %}selected{% endif %}>Preț crescător</option>
+                            <option value="pret_desc" {% if sortare == 'pret_desc' %}selected{% endif %}>Preț descrescător</option>
+                            <option value="nume" {% if sortare == 'nume' %}selected{% endif %}>Denumire (A-Z)</option>
+                        </select>
+                    </div>
+
+                    {# Interval de Preț #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-cash me-1 text-primary"></i>Preț Minim (lei)
+                        </label>
+                        <input type="number" step="0.01" min="0" name="pret_min" value="{{ pret_min }}" class="form-control form-control-sm" placeholder="ex: 100">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-cash me-1 text-primary"></i>Preț Maxim (lei)
+                        </label>
+                        <input type="number" step="0.01" min="0" name="pret_max" value="{{ pret_max }}" class="form-control form-control-sm" placeholder="ex: 5000">
+                    </div>
+
+                    {# În stoc #}
+                    <div class="col-md-3 d-flex align-items-center pt-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="in_stoc" value="1" id="checkInStoc" {% if in_stoc_doar %}checked{% endif %}>
+                            <label class="form-check-label small fw-bold text-dark" for="checkInStoc">
+                                <i class="bi bi-check2-circle text-success me-1"></i>Doar produse în stoc
+                            </label>
+                        </div>
+                    </div>
+
+                    {# Operator Logic ȘI / SAU (Bonusul cerut în temă) #}
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-cpu me-1 text-primary"></i>Operator între criterii:
+                        </label>
+                        <div class="d-flex gap-3 align-items-center mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="operator" id="opSi" value="si" {% if operator_logic != 'sau' %}checked{% endif %}>
+                                <label class="form-check-label small" for="opSi">
+                                    <strong>ȘI (AND)</strong> <span class="text-muted">(toate)</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="operator" id="opSau" value="sau" {% if operator_logic == 'sau' %}checked{% endif %}>
+                                <label class="form-check-label small" for="opSau">
+                                    <strong>SAU (OR)</strong> <span class="text-muted">(oricare)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Butoane aplicare / resetare filtre #}
+                <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+                    <a href="{% url 'catalog:lista_produse' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Resetează toate filtrele
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i>Aplică Filtrele
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -60,17 +195,17 @@
             {% endfor %}
         </div>
 
-        {# Paginarea rezultatelor #}
+        {# Paginarea rezultatelor cu conservarea parametrilor #}
         {% include "partiale/paginare.html" with page_obj=page_obj %}
     {% else %}
-        <div class="text-center py-5 bg-white rounded-3 shadow-sm border my-4">
-            <i class="bi bi-search text-muted opacity-50" style="font-size: 4rem;"></i>
-            <h4 class="fw-bold mt-3">Niciun produs găsit</h4>
-            <p class="text-muted col-md-6 mx-auto">
-                Nu am găsit produse care să corespundă căutării tale. Încearcă alți termeni sau explorează toate categoriile.
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm border my-4">
+            <i class="bi bi-funnel text-muted opacity-50" style="font-size: 4rem;"></i>
+            <h4 class="fw-bold mt-3">Niciun produs nu corespunde filtrelor selectate</h4>
+            <p class="text-muted col-md-6 mx-auto mb-4">
+                Nu am găsit produse care să respecte combinația aleasă de filtre. Încearcă să selectezi operatorul <strong>SAU</strong> sau să relaxezi criteriile de preț și categorie.
             </p>
-            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-primary mt-2">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> Resetează filtrele
+            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-primary fw-semibold px-4 py-2">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Resetează toate filtrele
             </a>
         </div>
     {% endif %}

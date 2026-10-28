@@ -1,0 +1,104 @@
+{# catalog/templates/catalog/contact.html #}
+{# Pagina de contact și suport clienți (Bonus) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Contact & Suport — ElectroMag{% endblock %}
+
+{% block continut %}
+<div class="container py-4">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Contact</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white h-100">
+                <h3 class="h4 fw-bold mb-4">
+                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>Date de Contact
+                </h3>
+
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-primary-subtle text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                        <i class="bi bi-geo-alt fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Adresă Sediu Central:</h6>
+                        <p class="text-muted small mb-0">Bulevardul Iuliu Maniu nr. 1-3, Sector 6, București</p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-success-subtle text-success rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                        <i class="bi bi-telephone fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Telefon Asistență Clienți:</h6>
+                        <p class="text-muted small mb-0">+40 21 000 1234 (Luni - Vineri, 09:00 - 18:00)</p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-info-subtle text-info rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                        <i class="bi bi-envelope fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Email Suport Tehnic:</h6>
+                        <p class="text-muted small mb-0">suport@electromag.ro</p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-start gap-3">
+                    <div class="bg-warning-subtle text-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                        <i class="bi bi-clock fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Program Procesare Comenzi:</h6>
+                        <p class="text-muted small mb-0">Comenzile online sunt procesate 24/7 de sistemul automat.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white h-100">
+                <h3 class="h4 fw-bold mb-3">
+                    <i class="bi bi-envelope-paper text-primary me-2"></i>Trimite-ne un Mesaj
+                </h3>
+                <p class="text-muted small mb-4">
+                    Ai o întrebare despre produsele noastre sau despre starea unei comenzi? Completează formularul de mai jos și echipa noastră îți va răspunde în cel mai scurt timp.
+                </p>
+
+                <form onsubmit="event.preventDefault(); alert('Mulțumim pentru mesaj! Un reprezentant ElectroMag te va contacta în curând.'); this.reset();">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Nume și Prenume</label>
+                            <input type="text" class="form-control" placeholder="Ion Popescu" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Adresă de Email</label>
+                            <input type="email" class="form-control" placeholder="ion.popescu@exemplu.ro" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Subiect</label>
+                            <input type="text" class="form-control" placeholder="Întrebare despre comanda #..." required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Mesaj</label>
+                            <textarea class="form-control" rows="4" placeholder="Scrie aici mesajul tău..." required></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                                <i class="bi bi-send me-1"></i> Trimite Mesajul
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

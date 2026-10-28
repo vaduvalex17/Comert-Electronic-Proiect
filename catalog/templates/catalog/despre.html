@@ -1,0 +1,83 @@
+{# catalog/templates/catalog/despre.html #}
+{# Pagina de prezentare a magazinului ElectroMag și a arhitecturii aplicate (Bonus) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Despre Noi — ElectroMag{% endblock %}
+
+{% block continut %}
+<div class="container py-4">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Despre Noi</li>
+        </ol>
+    </nav>
+
+    {# Banner Hero #}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-primary text-white p-5 mb-5 text-center">
+        <div class="max-w-700 mx-auto">
+            <span class="badge bg-light text-primary px-3 py-1 rounded-pill fw-bold mb-3">COMERȚ ELECTRONIC</span>
+            <h1 class="display-5 fw-bold mb-3">Bine ați venit la ElectroMag!</h1>
+            <p class="lead mb-0 opacity-90">
+                O aplicație completă de comerț electronic dezvoltată de la zero în Python 3 și Django 5, respectând toate cerințele academice de securitate, arhitectură și performanță.
+            </p>
+        </div>
+    </div>
+
+    {# 3 Piloni Principali #}
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="bg-primary-subtle text-primary rounded-circle p-3 d-inline-flex mb-3" style="width: 50px; height: 50px; align-items: center; justify-content: center;">
+                    <i class="bi bi-shield-check fs-4"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Securitate Riguroasă</h5>
+                <p class="text-muted small mb-0">
+                    Tranzacții atomice cu <code>transaction.atomic()</code> și <code>select_for_update()</code>, validare checksum Luhn pentru carduri, protecție CSRF și conformitate strictă PCI-DSS (stocare doar a ultimelor 4 cifre).
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="bg-success-subtle text-success rounded-circle p-3 d-inline-flex mb-3" style="width: 50px; height: 50px; align-items: center; justify-content: center;">
+                    <i class="bi bi-code-slash fs-4"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Arhitectură Curată FBV</h5>
+                <p class="text-muted small mb-0">
+                    Fiecare funcționalitate este implementată prin Function-Based Views (FBV), cu comentarii pas-cu-pas în limba română, facilitând explicarea clară a fluxului logic la laborator.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="bg-warning-subtle text-warning rounded-circle p-3 d-inline-flex mb-3" style="width: 50px; height: 50px; align-items: center; justify-content: center;">
+                    <i class="bi bi-stars fs-4"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Bonusuri Implementate</h5>
+                <p class="text-muted small mb-0">
+                    Filtrare avansată cu operatori logici (ȘI / SAU), sistem promoțional de coduri de reducere (cupoane), recenzii de la cumpărători verificați și panou executiv de statistici.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {# Casetă ghid de prezentare #}
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white text-center">
+        <h4 class="fw-bold text-dark mb-2">Ești gata pentru prezentare?</h4>
+        <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">
+            Toată documentația completă, scenariul demonstrativ click-cu-click și răspunsurile la cele 15 întrebări probabile se găsesc în directorul <code>docs/</code>.
+        </p>
+        <div>
+            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-primary px-4 py-2 fw-semibold me-2">
+                <i class="bi bi-grid me-1"></i> Răsfoiește Catalogul
+            </a>
+            <a href="{% url 'catalog:contact' %}" class="btn btn-outline-secondary px-4 py-2 fw-semibold">
+                <i class="bi bi-envelope me-1"></i> Asistență & Contact
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

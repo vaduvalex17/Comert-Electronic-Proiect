@@ -6,7 +6,16 @@ Permite administratorului să vizualizeze comenzile și articolele conținute.
 """
 
 from django.contrib import admin
-from .models import ArticolComanda, ArticolCos, Comanda, Favorit
+from .models import ArticolComanda, ArticolCos, CodReducere, Comanda, Favorit
+
+
+@admin.register(CodReducere)
+class CodReducereAdmin(admin.ModelAdmin):
+    """Administrarea codurilor promoționale de reducere."""
+
+    list_display = ('cod', 'procent_reducere', 'valoare_minima_comanda', 'activ', 'data_expirare')
+    list_filter = ('activ', 'data_expirare')
+    search_fields = ('cod',)
 
 
 class ArticolComandaInline(admin.TabularInline):

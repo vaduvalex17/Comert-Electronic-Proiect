@@ -18,6 +18,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from catalog.models import Categorie, Furnizor, ModalitateLivrare, Produs
+from cumparaturi.models import CodReducere
 
 User = get_user_model()
 
@@ -351,4 +352,23 @@ class Command(BaseCommand):
                 total_create += 1
 
         self.stdout.write(self.style.SUCCESS(f"✓ {len(produse_date)} produse verificate (din care {total_create} nou-create)."))
+
+        # -------------------------------------------------------------
+        # Pasul 6: Coduri promoționale demonstrative (Bonus)
+        # -------------------------------------------------------------
+        coduri_demo = [
+            {"cod": "GAMING10", "procent": 10, "minim": Decimal("0.00")},
+            {"cod": "ELECTRO20", "procent": 20, "minim": Decimal("1000.00")},
+            {"cod": "STUDENT15", "procent": 15, "minim": Decimal("200.00")},
+        ]
+        for c_data in coduri_demo:
+            CodReducere.objects.get_or_create(
+                cod=c_data["cod"],
+                defaults={
+                    "procent_reducere": c_data["procent"],
+                    "valoare_minima_comanda": c_data["minim"],
+                    "activ": True,
+                }
+            )
+        self.stdout.write(self.style.SUCCESS("✓ Coduri promoționale create (GAMING10, ELECTRO20, STUDENT15)."))
         self.stdout.write(self.style.SUCCESS("Baza de date a fost populată cu succes!"))

@@ -22,7 +22,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 from catalog.models import Categorie, Furnizor, ModalitateLivrare, Produs
-from cumparaturi.models import ArticolComanda, ArticolCos, Comanda, Favorit
+from cumparaturi.models import ArticolComanda, ArticolCos, CodReducere, Comanda, Favorit
 
 User = get_user_model()
 
@@ -600,4 +600,133 @@ class IstoricSiAdministrareComenziTest(TestCase):
 
         self.comanda_1.refresh_from_db()
         self.assertEqual(self.comanda_1.status, 'livrata')
+
+
+class CodReducereBonusTest(TestCase):
+    """Teste pentru Bonusul de Coduri Promoționale de Reducere."""
+
+    def setUp(self):
+        """Configurează clientul, produsele și codurile promoționale."""
+        self.client_user = User.objects.create_user(username='client_promo', password='parola123')
+        self.cat = Categorie.objects.create(nume='Accesorii')
+        self.furnizor = Furnizor.objects.create(nume='Furnizor Promo', email='p@t.ro', telefon='0700111222')
+        self.livrare = ModalitateLivrare.objects.create(nume='Curier', cost=Decimal('20.00'))
+
+        self.produs = Produs.objects.create(
+            nume='Tastatură Mecanică RGB',
+            categorie=self.cat,
+            furnizor=self.furnizor,
+            pret=Decimal('500.00'),
+            stoc=10
+        )
+        self.produs.modalitati_livrare.add(self.livrare)
+
+        # Cod 1: 10% reducere fără prag minim
+        self.cupon_10 = CodReducere.objects.create(
+            cod='TEST10',
+            procent_reducere=10,
+            valoare_minima_comanda=Decimal('0.00'),
+            activ=True
+        )
+
+        # Cod 2: 20% reducere cu prag minim de 1000 lei
+        self.cupon_vip = CodReducere.objects.create(
+            cod='VIP20',
+            procent_reducere=20,
+            valoare_minima_comanda=Decimal('1000.00'),
+            activ=True
+        )
+
+    def test_salvare_cod_cu_majuscule(self):
+        """Codul este salvat automat cu litere mari în baza de date."""
+        cupon = CodReducere.objects.create(cod='  reducere5  ', procent_reducere=5)
+        self.assertEqual(cupon.cod, 'REDUCERE5')
+
+    def test_aplicare_cod_valid_in_cos(self):
+        """Un cod valid se salvează în sesiune și scade totalul afișat în coș."""
+        self.client.login(username='client_promo', password='parola123')
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=1)
+
+        # Aplicăm TEST10 prin POST
+        url_aplica = reverse('cumparaturi:aplica_cod_reducere')
+        raspuns = self.client.post(url_aplica, {'cod': 'test10'})
+        self.assertRedirects(raspuns, reverse('cumparaturi:vizualizare_cos'))
+
+        # Verificăm că sesiunea a reținut codul
+        self.assertEqual(self.client.session.get('cod_reducere'), 'TEST10')
+
+        # Vizualizăm coșul: 500 lei - 10% (50 lei) + 20 livrare = 470 lei total
+        raspuns_cos = self.client.get(reverse('cumparaturi:vizualizare_cos'))
+        self.assertEqual(raspuns_cos.status_code, 200)
+        self.assertEqual(raspuns_cos.context['valoare_reducere'], Decimal('50.00'))
+        self.assertEqual(raspuns_cos.context['total'], Decimal('470.00'))
+
+    def test_respingere_cod_sub_pragul_minim(self):
+        """Un cod cu valoare minimă neatinsă este respins la aplicare."""
+        self.client.login(username='client_promo', password='parola123')
+        # Subtotal: 1 x 500 = 500 lei < 1000 lei (pragul pentru VIP20)
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=1)
+
+        url_aplica = reverse('cumparaturi:aplica_cod_reducere')
+        raspuns = self.client.post(url_aplica, {'cod': 'VIP20'})
+        self.assertRedirects(raspuns, reverse('cumparaturi:vizualizare_cos'))
+
+        # Sesiunea nu trebuie să rețină codul
+        self.assertIsNone(self.client.session.get('cod_reducere'))
+
+    def test_eliminare_cod_din_cos(self):
+        """Utilizatorul poate elimina un cod aplicat anterior."""
+        self.client.login(username='client_promo', password='parola123')
+        session = self.client.session
+        session['cod_reducere'] = 'TEST10'
+        session.save()
+
+        url_elimina = reverse('cumparaturi:elimina_cod_reducere')
+        raspuns = self.client.post(url_elimina)
+        self.assertRedirects(raspuns, reverse('cumparaturi:vizualizare_cos'))
+
+        self.assertIsNone(self.client.session.get('cod_reducere'))
+
+    def test_checkout_cu_cod_reducere_salveaza_reducerea_pe_comanda(self):
+        """La plasarea comenzii, reducerea este calculată, salvată pe comandă și sesiunea este curățată."""
+        self.client.login(username='client_promo', password='parola123')
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=2)  # 2 x 500 = 1000 lei
+
+        # Setăm codul TEST10 în sesiune (10% din 1000 = 100 lei reducere)
+        session = self.client.session
+        session['cod_reducere'] = 'TEST10'
+        session.save()
+
+        date_checkout = {
+            'nume_destinatar': 'Ion Promo',
+            'telefon': '0711222333',
+            'adresa': 'Strada Promo 1',
+            'oras': 'București',
+            'judet': 'București',
+            'cod_postal': '010101',
+            'modalitate_livrare': self.livrare.id,
+            'titular_card': 'ION PROMO',
+            'numar_card': '4242 4242 4242 4242',
+            'expirare_card': '12/28',
+            'cvv_card': '123',
+        }
+
+        raspuns = self.client.post(reverse('cumparaturi:finalizare_comanda'), date_checkout)
+        comanda = Comanda.objects.filter(utilizator=self.client_user).first()
+        self.assertIsNotNone(comanda)
+        self.assertRedirects(raspuns, reverse('cumparaturi:confirmare_comanda', kwargs={'comanda_id': comanda.id}))
+
+        # Verificăm datele financiare pe comandă:
+        # Subtotal: 1000 lei
+        # Reducere: 100 lei
+        # Transport: 20 lei
+        # Total: (1000 - 100) + 20 = 920 lei
+        self.assertEqual(comanda.subtotal, Decimal('1000.00'))
+        self.assertEqual(comanda.valoare_reducere, Decimal('100.00'))
+        self.assertEqual(comanda.total, Decimal('920.00'))
+        self.assertEqual(comanda.cod_reducere, self.cupon_10)
+
+        # Sesiunea nu mai are codul
+        self.assertIsNone(self.client.session.get('cod_reducere'))
+
 

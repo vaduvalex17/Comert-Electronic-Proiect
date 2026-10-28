@@ -12,7 +12,8 @@ Fiecare model include denumiri în limba română (verbose_name), validatori
 """
 
 from decimal import Decimal
-from django.core.validators import MinValueValidator
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -239,3 +240,58 @@ class Produs(models.Model):
         elif self.stoc <= 5:
             return "Stoc limitat"
         return "În stoc"
+
+    @property
+    def medie_rating(self):
+        """Calculează media stelelor primite (1.0 - 5.0) sau 0 dacă nu are recenzii."""
+        from django.db.models import Avg
+        agregare = self.recenzii.aggregate(Avg('rating'))['rating__avg']
+        if agregare is not None:
+            return round(agregare, 1)
+        return 0
+
+    @property
+    def numar_recenzii(self):
+        """Numărul total de recenzii acordate acestui produs."""
+        return self.recenzii.count()
+
+
+class Recenzie(models.Model):
+    """Recenzie și notă acordată unui produs de către un cumpărător verificat (Bonus)."""
+
+    produs = models.ForeignKey(
+        Produs,
+        on_delete=models.CASCADE,
+        related_name='recenzii',
+        verbose_name="Produs"
+    )
+    utilizator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recenzii',
+        verbose_name="Utilizator"
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name="Notă (1-5 stele)"
+    )
+    titlu = models.CharField(
+        max_length=150,
+        verbose_name="Titlu recenzie"
+    )
+    comentariu = models.TextField(
+        verbose_name="Comentariu detaliat"
+    )
+    creata_la = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Data adăugării"
+    )
+
+    class Meta:
+        verbose_name = "Recenzie"
+        verbose_name_plural = "Recenzii"
+        unique_together = ('produs', 'utilizator')
+        ordering = ['-creata_la']
+
+    def __str__(self):
+        return f"{self.rating}★ de {self.utilizator.username} pentru {self.produs.nume}"

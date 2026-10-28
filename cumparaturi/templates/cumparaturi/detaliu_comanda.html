@@ -134,8 +134,14 @@
                             <div class="bg-light p-3 rounded-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Subtotal produse:</span>
-                                    <span class="fw-semibold text-dark">{{ comanda.subtotal_articole }} lei</span>
+                                    <span class="fw-semibold text-dark">{{ comanda.subtotal }} lei</span>
                                 </div>
+                                {% if comanda.valoare_reducere > 0 %}
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span><i class="bi bi-tag-fill me-1"></i>Reducere ({{ comanda.cod_reducere.cod|default:"Cupon" }}):</span>
+                                        <span class="fw-semibold">-{{ comanda.valoare_reducere }} lei</span>
+                                    </div>
+                                {% endif %}
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Cost transport:</span>
                                     <span class="fw-semibold text-dark">{{ comanda.cost_livrare }} lei</span>

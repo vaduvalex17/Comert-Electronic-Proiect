@@ -10,14 +10,18 @@ Controllere (views) pentru administrarea produselor de către administratori (Ce
 Toate funcțiile sunt protejate cu decoratorul `@doar_admin`.
 """
 
+from decimal import Decimal
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, F, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from conturi.decoratori import doar_admin
-from cumparaturi.models import ArticolComanda
+from cumparaturi.models import ArticolComanda, Comanda
 from .forms import ProdusForm
-from .models import Produs
+from .models import Categorie, Produs
+
+User = get_user_model()
 
 
 @doar_admin
@@ -148,3 +152,54 @@ def admin_produs_sterge(request, pk):
         'titlu': f"Confirmă ștergerea: {produs.nume}",
     }
     return render(request, 'catalog/admin/admin_produs_sterge.html', context)
+
+
+@doar_admin
+def admin_dashboard(request):
+    """Panou central de control cu statistici agregate și indicatori cheie de performanță (KPI) (Bonus Faza 9)."""
+    # 1. Indicatori comerciali
+    total_comenzi = Comanda.objects.count()
+    venituri_totale = Comanda.objects.exclude(status='anulata').aggregate(venit=Sum('total'))['venit'] or Decimal('0.00')
+    total_clienti = User.objects.filter(is_staff=False).count()
+    total_produse = Produs.objects.filter(activ=True).count()
+
+    # 2. Alerte de inventar
+    stoc_epuizat = Produs.objects.filter(activ=True, stoc=0).count()
+    stoc_critic = Produs.objects.filter(activ=True, stoc__gt=0, stoc__lte=5).count()
+
+    # 3. Top 5 produse cele mai vândute
+    top_produse = list(
+        ArticolComanda.objects.filter(
+            comanda__status__in=['plasata', 'in_procesare', 'livrata']
+        ).values('produs_id', 'nume_produs').annotate(
+            bucati=Sum('cantitate'),
+            venit=Sum(F('pret_unitar') * F('cantitate'))
+        ).order_by('-bucati')[:5]
+    )
+
+    # 4. Ultimele 6 comenzi plasate în magazin
+    ultimele_comenzi = Comanda.objects.select_related(
+        'utilizator', 'modalitate_livrare'
+    ).order_by('-creata_la')[:6]
+
+    # 5. Distribuția comenzilor pe statusuri
+    status_statistici = {
+        'plasata': Comanda.objects.filter(status='plasata').count(),
+        'in_procesare': Comanda.objects.filter(status='in_procesare').count(),
+        'livrata': Comanda.objects.filter(status='livrata').count(),
+        'anulata': Comanda.objects.filter(status='anulata').count(),
+    }
+
+    context = {
+        'total_comenzi': total_comenzi,
+        'venituri_totale': venituri_totale,
+        'total_clienti': total_clienti,
+        'total_produse': total_produse,
+        'stoc_epuizat': stoc_epuizat,
+        'stoc_critic': stoc_critic,
+        'top_produse': top_produse,
+        'ultimele_comenzi': ultimele_comenzi,
+        'status_statistici': status_statistici,
+        'titlu': 'Panou de Control & Statistici Administrator',
+    }
+    return render(request, 'catalog/admin/admin_dashboard.html', context)

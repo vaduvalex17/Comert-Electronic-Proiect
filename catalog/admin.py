@@ -6,7 +6,16 @@ Configurat cu filtre, căutare și afișare tabelară pentru o navigare facilă.
 """
 
 from django.contrib import admin
-from .models import Categorie, Furnizor, ModalitateLivrare, Produs
+from .models import Categorie, Furnizor, ModalitateLivrare, Produs, Recenzie
+
+
+@admin.register(Recenzie)
+class RecenzieAdmin(admin.ModelAdmin):
+    """Configurarea administrării recenziilor clienților."""
+
+    list_display = ('produs', 'utilizator', 'rating', 'titlu', 'creata_la')
+    list_filter = ('rating', 'creata_la')
+    search_fields = ('produs__nume', 'utilizator__username', 'titlu', 'comentariu')
 
 
 @admin.register(Categorie)

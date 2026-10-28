@@ -31,6 +31,8 @@ urlpatterns = [
     path('cos/adauga/<int:produs_id>/', views.adaugare_in_cos, name='adaugare_in_cos'),
     path('cos/actualizeaza/<int:articol_id>/', views.actualizeaza_cos, name='actualizeaza_cos'),
     path('cos/elimina/<int:articol_id>/', views.elimina_din_cos, name='elimina_din_cos'),
+    path('cos/cupon/aplica/', views.aplica_cod_reducere, name='aplica_cod_reducere'),
+    path('cos/cupon/elimina/', views.elimina_cod_reducere, name='elimina_cod_reducere'),
 
     # -------------------------------------------------------------
     # 3. Finalizare și Confirmare Comandă (Cerința R2.2 — A doua parte)

@@ -6,7 +6,7 @@
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?pagina={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo; Anterior</a>
+                <a class="page-link" href="?pagina={{ page_obj.previous_page_number }}{% if parametri_url %}&{{ parametri_url }}{% elif request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo; Anterior</a>
             </li>
         {% else %}
             <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
@@ -17,14 +17,14 @@
                 <li class="page-item active"><span class="page-link">{{ num }}</span></li>
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                 <li class="page-item">
-                    <a class="page-link" href="?pagina={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                    <a class="page-link" href="?pagina={{ num }}{% if parametri_url %}&{{ parametri_url }}{% elif request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
                 </li>
             {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?pagina={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Următor &raquo;</a>
+                <a class="page-link" href="?pagina={{ page_obj.next_page_number }}{% if parametri_url %}&{{ parametri_url }}{% elif request.GET.q %}&q={{ request.GET.q }}{% endif %}">Următor &raquo;</a>
             </li>
         {% else %}
             <li class="page-item disabled"><span class="page-link">Următor &raquo;</span></li>

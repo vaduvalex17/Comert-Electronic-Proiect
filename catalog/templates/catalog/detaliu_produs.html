@@ -52,7 +52,28 @@
                     </div>
 
                     {# Nume produs #}
-                    <h1 class="h2 fw-bold text-dark mb-3">{{ produs.nume }}</h1>
+                    <h1 class="h2 fw-bold text-dark mb-2">{{ produs.nume }}</h1>
+
+                    {# Rating mediu și număr recenzii #}
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="text-warning">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= produs.medie_rating %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="fw-bold text-dark small">
+                            {% if produs.numar_recenzii > 0 %}
+                                {{ produs.medie_rating }}/5
+                            {% else %}
+                                Fără recenzii
+                            {% endif %}
+                        </span>
+                        <span class="text-muted small">({{ produs.numar_recenzii }} recenzii verificate)</span>
+                    </div>
 
                     {# Furnizor (R1.3) #}
                     <div class="mb-3 text-muted small">
@@ -187,6 +208,122 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    {# Secțiunea Recenzii & Rating Cumpărători Verificați (Bonus Faza 9) #}
+    <div class="card border-0 shadow-sm rounded-4 mb-5 p-4 p-md-5 bg-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pb-3 mb-4 border-bottom">
+            <div>
+                <h3 class="h4 fw-bold mb-1">
+                    <i class="bi bi-chat-square-quote text-primary me-2"></i>Recenzii & Opinii ale Cumpărătorilor
+                </h3>
+                <p class="text-muted small mb-0">
+                    Recenziile pot fi adăugate exclusiv de către clienții care au comandat și achiziționat acest produs.
+                </p>
+            </div>
+            <div class="text-end">
+                <span class="fs-3 fw-bold text-dark">{{ produs.medie_rating }}/5</span>
+                <div class="text-warning small">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= produs.medie_rating %}
+                            <i class="bi bi-star-fill"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# Formular Adăugare Recenzie sau Mesaj de eligibilitate #}
+        <div class="mb-5">
+            {% if poate_lasa_recenzie %}
+                <div class="card border-primary-subtle bg-light rounded-3 p-4 mb-4">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Lasă o recenzie pentru produsul achiziționat
+                    </h5>
+                    <form method="post" action="{% url 'catalog:adauga_recenzie' slug=produs.slug %}">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Notă acordată (1-5 stele):</label>
+                                {{ form_recenzie.rating }}
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold small">Titlul recenziei tale:</label>
+                                {{ form_recenzie.titlu }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Comentariul tău detaliat:</label>
+                                {{ form_recenzie.comentariu }}
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                                    <i class="bi bi-send me-1"></i> Publică Recenzia
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            {% elif deja_recenzat %}
+                <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <div>Ai publicat deja o recenzie pentru acest produs. Îți mulțumim pentru feedback!</div>
+                </div>
+            {% elif user.is_authenticated %}
+                <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                    <div>
+                        <strong>Achiziție verificată:</strong> Doar clienții care au comandat acest produs din contul lor pot lăsa o recenzie. Dacă l-ai cumpărat deja, asigură-te că folosești același cont de client.
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-light border d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                    <div>
+                        <i class="bi bi-person-lock text-primary me-2"></i>
+                        <span>Autentifică-te pentru a afla dacă ești eligibil să lași o recenzie pentru acest produs.</span>
+                    </div>
+                    <a href="{% url 'conturi:login' %}?next={{ request.path }}" class="btn btn-sm btn-outline-primary">
+                        Conectează-te
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Lista Recenziilor #}
+        {% if recenzii %}
+            <div class="vstack gap-3">
+                {% for rec in recenzii %}
+                    <div class="p-3 border rounded-3 bg-white">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-dark">{{ rec.utilizator.username }}</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Cumpărător Verificat
+                                </span>
+                            </div>
+                            <span class="text-muted small">{{ rec.creata_la|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="text-warning small mb-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= rec.rating %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">{{ rec.titlu }}</h6>
+                        <p class="text-muted small mb-0">{{ rec.comentariu|linebreaksbr }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-chat-square-dots fs-1 opacity-50 d-block mb-2"></i>
+                <p class="mb-0">Acest produs nu are încă nicio recenzie. Fii primul cumpărător care lasă o părere după comandă!</p>
+            </div>
+        {% endif %}
     </div>
 
     {# Produse similare #}

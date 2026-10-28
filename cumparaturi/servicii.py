@@ -23,7 +23,7 @@ class StocInsuficient(Exception):
     pass
 
 
-def plaseaza_comanda(utilizator, date_livrare, modalitate_livrare, numar_card):
+def plaseaza_comanda(utilizator, date_livrare, modalitate_livrare, numar_card, cod_reducere_obj=None):
     """Transformă articolele din coșul utilizatorului într-o comandă fermă.
 
     Parametri:
@@ -31,6 +31,7 @@ def plaseaza_comanda(utilizator, date_livrare, modalitate_livrare, numar_card):
         date_livrare: dicționar cu câmpurile de adresă (nume_destinatar, telefon, adresa, oras, judet, cod_postal)
         modalitate_livrare: instanța ModalitateLivrare aleasă
         numar_card: numărul cardului validat anterior (se rețin doar ultimele 4 cifre)
+        cod_reducere_obj: instanță opțională de CodReducere aplicat din sesiune
 
     Returnează:
         Instanța Comanda creată cu succes.
@@ -66,8 +67,17 @@ def plaseaza_comanda(utilizator, date_livrare, modalitate_livrare, numar_card):
 
         # Pasul 4: Calculăm sumele finale strict pe server
         subtotal = sum(art.produs.pret * art.cantitate for art in articole_cos)
+        valoare_reducere = Decimal('0.00')
+        cupon_aplicabil = None
+
+        if cod_reducere_obj:
+            este_valid, _ = cod_reducere_obj.este_valid(subtotal)
+            if este_valid:
+                valoare_reducere = cod_reducere_obj.calculeaza_reducere(subtotal)
+                cupon_aplicabil = cod_reducere_obj
+
         cost_livrare = modalitate_livrare.cost
-        total_general = subtotal + cost_livrare
+        total_general = (subtotal - valoare_reducere) + cost_livrare
 
         # Pasul 5: Extragem doar ultimele 4 cifre ale cardului (securitate conform §6.1)
         card_curatat = numar_card.replace(' ', '').replace('-', '')
@@ -85,6 +95,8 @@ def plaseaza_comanda(utilizator, date_livrare, modalitate_livrare, numar_card):
             modalitate_livrare=modalitate_livrare,
             cost_livrare=cost_livrare,
             subtotal=subtotal,
+            cod_reducere=cupon_aplicabil,
+            valoare_reducere=valoare_reducere,
             total=total_general,
             card_ultimele4=card_ultimele4,
             status='plasata',

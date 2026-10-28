@@ -19,10 +19,14 @@ urlpatterns = [
     path('produse/', views.lista_produse, name='lista_produse'),
     path('categorie/<slug:slug>/', views.produse_categorie, name='produse_categorie'),
     path('produs/<slug:slug>/', views.detaliu_produs, name='detaliu_produs'),
+    path('produs/<slug:slug>/recenzie/', views.adauga_recenzie, name='adauga_recenzie'),
+    path('despre/', views.despre_noi, name='despre'),
+    path('contact/', views.contact, name='contact'),
 
     # -------------------------------------------------------------
     # 2. Rute panou de administrare produse (CRUD Admin - R1.2)
     # -------------------------------------------------------------
+    path('administrare/statistici/', views_admin.admin_dashboard, name='admin_dashboard'),
     path('administrare/produse/', views_admin.admin_produse_lista, name='admin_produse_lista'),
     path('administrare/produse/adauga/', views_admin.admin_produs_adauga, name='admin_produs_adauga'),
     path('administrare/produse/<int:pk>/editeaza/', views_admin.admin_produs_editeaza, name='admin_produs_editeaza'),

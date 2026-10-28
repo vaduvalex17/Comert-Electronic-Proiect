@@ -10,7 +10,7 @@ Modelele bazei de date pentru procesul de achiziție:
 
 from decimal import Decimal
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -165,6 +165,20 @@ class Comanda(models.Model):
         default=Decimal('0.00'),
         verbose_name="Subtotal produse (lei)"
     )
+    cod_reducere = models.ForeignKey(
+        'CodReducere',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='comenzi',
+        verbose_name="Cod reducere aplicat"
+    )
+    valoare_reducere = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Reducere aplicată (lei)"
+    )
     total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -234,3 +248,62 @@ class ArticolComanda(models.Model):
     def subtotal(self):
         """Valoarea totală a acestei linii din comandă."""
         return self.pret_unitar * self.cantitate
+
+
+class CodReducere(models.Model):
+    """Cod promoțional pentru aplicarea unei reduceri procentuale la comandă (Bonus)."""
+
+    cod = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name="Cod cupon"
+    )
+    procent_reducere = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        help_text="Procentul de reducere aplicat (1-100%)",
+        verbose_name="Procent reducere (%)"
+    )
+    valoare_minima_comanda = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Valoare minimă comandă (lei)"
+    )
+    activ = models.BooleanField(
+        default=True,
+        verbose_name="Este activ"
+    )
+    data_expirare = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Data expirării"
+    )
+
+    class Meta:
+        verbose_name = "Cod de Reducere"
+        verbose_name_plural = "Coduri de Reducere"
+        ordering = ['cod']
+
+    def save(self, *args, **kwargs):
+        # Salvăm întotdeauna codul cu majuscule fără spații
+        self.cod = self.cod.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.cod} (-{self.procent_reducere}%)"
+
+    def este_valid(self, suma_produse=Decimal('0.00')):
+        """Verifică dacă codul poate fi utilizat pentru suma transmisă."""
+        from django.utils import timezone
+        if not self.activ:
+            return False, "Codul promoțional nu mai este activ."
+        if self.data_expirare and timezone.now().date() > self.data_expirare:
+            return False, "Codul promoțional a expirat."
+        if Decimal(suma_produse) < self.valoare_minima_comanda:
+            return False, f"Valoarea minimă a comenzii pentru acest cod este de {self.valoare_minima_comanda} lei."
+        return True, "Codul este valid."
+
+    def calculeaza_reducere(self, suma_produse):
+        """Calculează valoarea exactă a reducerii în lei."""
+        reducere = (Decimal(suma_produse) * Decimal(self.procent_reducere) / Decimal('100')).quantize(Decimal('0.01'))
+        return min(reducere, Decimal(suma_produse))

@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from catalog.models import ModalitateLivrare, Produs
 from conturi.decoratori import doar_admin
 from .forms import FinalizareComandaForm
-from .models import ArticolCos, Comanda, Favorit
+from .models import ArticolCos, CodReducere, Comanda, Favorit
 from .servicii import StocInsuficient, plaseaza_comanda
 
 
@@ -118,12 +118,31 @@ def muta_in_cos(request, favorit_id):
 
 @login_required
 def vizualizare_cos(request):
-    """Afișează coșul de cumpărături curent, sumarul comenzii și opțiunile de livrare."""
+    """Afișează coșul de cumpărături curent, sumarul comenzii, codul de reducere și opțiunile de livrare."""
     articole = ArticolCos.objects.filter(
         utilizator=request.user
     ).select_related('produs', 'produs__categorie')
 
     subtotal = sum(articol.subtotal for articol in articole)
+
+    # Verificăm dacă există un cod promoțional activ în sesiune (Bonus Faza 9)
+    cod_salvat = request.session.get('cod_reducere')
+    cupon = None
+    valoare_reducere = Decimal('0.00')
+
+    if cod_salvat and subtotal > Decimal('0.00'):
+        cupon = CodReducere.objects.filter(cod=cod_salvat, activ=True).first()
+        if cupon:
+            este_valid, motiv = cupon.este_valid(subtotal)
+            if este_valid:
+                valoare_reducere = cupon.calculeaza_reducere(subtotal)
+            else:
+                # Nu mai este valid pentru suma actuală (ex: s-a redus cantitatea sub pragul minim)
+                request.session.pop('cod_reducere', None)
+                messages.warning(request, f"Codul «{cod_salvat}» a fost anulat: {motiv}")
+                cupon = None
+        else:
+            request.session.pop('cod_reducere', None)
 
     # Intersecția modalităților de livrare (§6.1)
     livrari_comune = []
@@ -148,11 +167,13 @@ def vizualizare_cos(request):
         request.session['livrare_id'] = livrare_selectata.id
 
     cost_livrare = livrare_selectata.cost if livrare_selectata else Decimal('0.00')
-    total = subtotal + cost_livrare
+    total = (subtotal - valoare_reducere) + cost_livrare
 
     context = {
         'articole': articole,
         'subtotal': subtotal,
+        'cupon': cupon,
+        'valoare_reducere': valoare_reducere,
         'livrari_comune': livrari_comune,
         'livrare_selectata': livrare_selectata,
         'cost_livrare': cost_livrare,
@@ -160,6 +181,54 @@ def vizualizare_cos(request):
         'titlu': 'Coșul Meu de Cumpărături',
     }
     return render(request, 'cumparaturi/cos.html', context)
+
+
+@login_required
+def aplica_cod_reducere(request):
+    """Validează și aplică un cod promoțional în sesiunea cumpărătorului (Bonus Faza 9)."""
+    if request.method != 'POST':
+        return redirect('cumparaturi:vizualizare_cos')
+
+    cod_introdus = request.POST.get('cod', '').strip().upper()
+    if not cod_introdus:
+        messages.error(request, "Te rugăm să introduci un cod promoțional.")
+        return redirect('cumparaturi:vizualizare_cos')
+
+    articole = ArticolCos.objects.filter(utilizator=request.user).select_related('produs')
+    subtotal = sum(art.subtotal for art in articole)
+
+    if subtotal <= Decimal('0.00'):
+        messages.warning(request, "Coșul este gol. Adaugă produse înainte de a aplica un cod promoțional.")
+        return redirect('cumparaturi:vizualizare_cos')
+
+    cupon = CodReducere.objects.filter(cod=cod_introdus).first()
+    if not cupon:
+        messages.error(request, f"Codul promoțional «{cod_introdus}» nu există sau este incorect.")
+        return redirect('cumparaturi:vizualizare_cos')
+
+    este_valid, mesaj = cupon.este_valid(subtotal)
+    if not este_valid:
+        messages.error(request, mesaj)
+        return redirect('cumparaturi:vizualizare_cos')
+
+    request.session['cod_reducere'] = cupon.cod
+    reducere_estimata = cupon.calculeaza_reducere(subtotal)
+    messages.success(
+        request,
+        f"Felicitări! Codul «{cupon.cod}» a fost aplicat cu succes. "
+        f"Ai obținut o reducere de {cupon.procent_reducere}% (-{reducere_estimata} lei)."
+    )
+    return redirect('cumparaturi:vizualizare_cos')
+
+
+@login_required
+def elimina_cod_reducere(request):
+    """Elimină codul promoțional curent din sesiune."""
+    if request.method == 'POST':
+        cod_sters = request.session.pop('cod_reducere', None)
+        if cod_sters:
+            messages.info(request, f"Codul promoțional «{cod_sters}» a fost eliminat din coș.")
+    return redirect('cumparaturi:vizualizare_cos')
 
 
 @login_required
@@ -285,6 +354,19 @@ def finalizare_comanda(request):
 
     subtotal = sum(art.subtotal for art in articole)
 
+    # Verificăm dacă există cupon activ în sesiune (Bonus Faza 9)
+    cod_salvat = request.session.get('cod_reducere')
+    cupon = None
+    valoare_reducere = Decimal('0.00')
+    if cod_salvat:
+        cupon = CodReducere.objects.filter(cod=cod_salvat, activ=True).first()
+        if cupon:
+            este_valid, _ = cupon.este_valid(subtotal)
+            if este_valid:
+                valoare_reducere = cupon.calculeaza_reducere(subtotal)
+            else:
+                cupon = None
+
     if request.method == 'POST':
         formular = FinalizareComandaForm(livrari_comune, request.POST)
         if formular.is_valid():
@@ -293,8 +375,11 @@ def finalizare_comanda(request):
                     utilizator=request.user,
                     date_livrare=formular.cleaned_data,
                     modalitate_livrare=formular.cleaned_data['modalitate_livrare'],
-                    numar_card=formular.cleaned_data['numar_card']
+                    numar_card=formular.cleaned_data['numar_card'],
+                    cod_reducere_obj=cupon
                 )
+                # Ștergem cuponul consumat din sesiune
+                request.session.pop('cod_reducere', None)
                 messages.success(request, f"Comanda ta #{comanda.id} a fost înregistrată cu succes!")
                 return redirect('cumparaturi:confirmare_comanda', comanda_id=comanda.id)
 
@@ -324,6 +409,8 @@ def finalizare_comanda(request):
         'form': formular,
         'articole': articole,
         'subtotal': subtotal,
+        'cupon': cupon,
+        'valoare_reducere': valoare_reducere,
         'livrari_comune': livrari_comune,
         'titlu': 'Finalizare Comandă (Checkout)',
     }

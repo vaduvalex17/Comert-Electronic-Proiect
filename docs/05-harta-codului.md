@@ -31,6 +31,13 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Tranzacție Comandă (R2.2)** | `cumparaturi/servicii.py` | `plaseaza_comanda()` | Tranzacție atomică, verificare stoc și snapshot |
 | **Checkout View (R2.2)** | `cumparaturi/views.py` | `finalizare_comanda()` | Preluare date livrare și plată simulată |
 | **Confirmare Comandă (R2.2)**| `cumparaturi/views.py` | `confirmare_comanda()` | Pagina de succes cu detaliile comenzii plasate |
+| **Catalog & Filtrare ȘI/SAU (Bonus)**| `catalog/views.py` | `lista_produse()` | Filtrare multiplă (preț, furnizor, stoc, livrare) cu operatori logici ȘI/SAU |
+| **Recenzii Produs (Bonus)** | `catalog/views.py` | `adauga_recenzie()` | Notare 1-5 stele și comentariu strict pentru cumpărători verificați |
+| **Dashboard Statistici Admin (Bonus)**| `catalog/views_admin.py` | `admin_dashboard()` | Panou executiv KPI: venituri, comenzi, top 5 produse, alerte stoc |
+| **Cupoane de Reducere (Bonus)**| `cumparaturi/views.py` | `aplica_cod_reducere()` | Validare și aplicare cod promoțional în coș și comandă |
+| **Eliminare Cupon (Bonus)** | `cumparaturi/views.py` | `elimina_cod_reducere()` | Ștergerea cuponului activ din sesiune |
+| **Pagina Despre Noi** | `catalog/views.py` | `despre_noi()` | Prezentarea magazinului și a arhitecturii aplicate |
+| **Pagina Contact** | `catalog/views.py` | `contact()` | Formular și date de suport clienți |
 | **Istoric Comenzi (R2.3)** | `cumparaturi/views.py` | `istoric_comenzi()` | Lista comenzilor clientului cu paginare |
 | **Detaliu Comandă / Factură (R2.3)**| `cumparaturi/views.py` | `detaliu_comanda()` | Vizualizare factură comandă, protecție IDOR (404) |
 | **Gestiune Comenzi Admin (R2.3)**| `cumparaturi/views.py` | `admin_comenzi_lista()` | Vizualizare comenzi globale și filtru după status |

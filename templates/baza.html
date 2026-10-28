@@ -125,6 +125,11 @@
                                         <h6 class="dropdown-header text-uppercase text-danger fw-bold">Panou Admin</h6>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{% url 'catalog:admin_dashboard' %}">
+                                            <i class="bi bi-speedometer2 me-2"></i>Dashboard Statistici
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{% url 'catalog:admin_produse_lista' %}">
                                             <i class="bi bi-boxes me-2"></i>Administrare Produse
                                         </a>
@@ -207,6 +212,12 @@
                     <small class="text-secondary">Aplicație Web MVC (Django 5 + SQLite + Bootstrap 5)</small>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
+                    <div class="mb-1">
+                        <a href="{% url 'catalog:acasa' %}" class="text-decoration-none text-muted small me-3">Acasă</a>
+                        <a href="{% url 'catalog:lista_produse' %}" class="text-decoration-none text-muted small me-3">Catalog</a>
+                        <a href="{% url 'catalog:despre' %}" class="text-decoration-none text-muted small me-3">Despre Noi</a>
+                        <a href="{% url 'catalog:contact' %}" class="text-decoration-none text-muted small me-3">Contact</a>
+                    </div>
                     <span class="badge bg-light text-dark border me-2">Tema II (Individual)</span>
                     <span class="badge bg-primary text-white">2026</span>
                 </div>
