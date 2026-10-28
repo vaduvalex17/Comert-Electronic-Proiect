@@ -10,6 +10,10 @@ Teste automate pentru modulul de cumpărături:
   - Plafonare cantitate la stocul disponibil
   - Intersecția modalităților de livrare (doar cele comune tuturor produselor)
   - Actualizare cantitate și eliminare din coș
+- Finalizare comandă (Cerința R2.2):
+  - Comandă reușită: tranzacție atomică, scădere stoc, golire coș, snapshot prețuri, total corect
+  - Stoc insuficient: tranzacție anulată integral (rollback), nimic salvat
+  - Validare card Luhn și respingerea cardurilor expirate
 """
 
 from decimal import Decimal
@@ -161,11 +165,9 @@ class FavoriteFlowTest(TestCase):
         """Verifică adăugarea și eliminarea alternativă din favorite prin apel POST."""
         self.client.login(username='cumpărător_test', password='parola_client')
 
-        # 1. Adăugare în favorite
         self.client.post(reverse('cumparaturi:adauga_elimina_favorit', kwargs={'produs_id': self.produs_stoc.id}))
         self.assertTrue(Favorit.objects.filter(utilizator=self.client_user, produs=self.produs_stoc).exists())
 
-        # 2. Re-apelare toggle pe același produs -> îl elimină
         self.client.post(reverse('cumparaturi:adauga_elimina_favorit', kwargs={'produs_id': self.produs_stoc.id}))
         self.assertFalse(Favorit.objects.filter(utilizator=self.client_user, produs=self.produs_stoc).exists())
 
@@ -227,7 +229,6 @@ class CosCumparaturiTest(TestCase):
             telefon='0711999888'
         )
 
-        # Modalități de livrare
         self.livrare_curier = ModalitateLivrare.objects.create(
             nume='Curier Rapid',
             cost=Decimal('20.00'),
@@ -244,7 +245,6 @@ class CosCumparaturiTest(TestCase):
             zile_estimate=1
         )
 
-        # Produs 1 (suportă Curier și Easybox, stoc = 3)
         self.p1 = Produs.objects.create(
             nume='Laptop Dell Inspiron',
             slug='laptop-dell-inspiron',
@@ -256,7 +256,6 @@ class CosCumparaturiTest(TestCase):
         )
         self.p1.modalitati_livrare.add(self.livrare_curier, self.livrare_easybox)
 
-        # Produs 2 (suportă Curier și Showroom, stoc = 10)
         self.p2 = Produs.objects.create(
             nume='Mouse Wireless',
             slug='mouse-wireless',
@@ -277,14 +276,12 @@ class CosCumparaturiTest(TestCase):
         """Adăugarea prin POST creează un ArticolCos sau incrementează cantitatea."""
         self.client.login(username='cumparator_cos', password='parola_cos')
 
-        # Adăugăm prima bucată
         raspuns1 = self.client.post(reverse('cumparaturi:adaugare_in_cos', kwargs={'produs_id': self.p1.id}), {'cantitate': 1})
         self.assertRedirects(raspuns1, reverse('cumparaturi:vizualizare_cos'))
 
         articol = ArticolCos.objects.get(utilizator=self.client_user, produs=self.p1)
         self.assertEqual(articol.cantitate, 1)
 
-        # Adăugăm încă o bucată
         self.client.post(reverse('cumparaturi:adaugare_in_cos', kwargs={'produs_id': self.p1.id}), {'cantitate': 1})
         articol.refresh_from_db()
         self.assertEqual(articol.cantitate, 2)
@@ -293,7 +290,6 @@ class CosCumparaturiTest(TestCase):
         """Dacă utilizatorul cere o cantitate mai mare decât stocul (stoc=3), este plafonat la 3."""
         self.client.login(username='cumparator_cos', password='parola_cos')
 
-        # Cerem 5 bucăți din produsul p1 care are stoc 3
         self.client.post(reverse('cumparaturi:adaugare_in_cos', kwargs={'produs_id': self.p1.id}), {'cantitate': 5})
         articol = ArticolCos.objects.get(utilizator=self.client_user, produs=self.p1)
         self.assertEqual(articol.cantitate, 3)
@@ -303,12 +299,10 @@ class CosCumparaturiTest(TestCase):
         self.client.login(username='cumparator_cos', password='parola_cos')
         articol = ArticolCos.objects.create(utilizator=self.client_user, produs=self.p1, cantitate=1)
 
-        # Modificare la 2 bucăți
         self.client.post(reverse('cumparaturi:actualizeaza_cos', kwargs={'articol_id': articol.id}), {'cantitate': 2})
         articol.refresh_from_db()
         self.assertEqual(articol.cantitate, 2)
 
-        # Modificare la 0 bucăți -> elimină articolul
         self.client.post(reverse('cumparaturi:actualizeaza_cos', kwargs={'articol_id': articol.id}), {'cantitate': 0})
         self.assertFalse(ArticolCos.objects.filter(id=articol.id).exists())
 
@@ -316,28 +310,19 @@ class CosCumparaturiTest(TestCase):
         """Verifică corectitudinea calculului subtotalului și a totalului pe pagina de coș."""
         self.client.login(username='cumparator_cos', password='parola_cos')
 
-        # 2 bucăți x 3000 lei = 6000 lei
         ArticolCos.objects.create(utilizator=self.client_user, produs=self.p1, cantitate=2)
-        # 1 bucată x 100 lei = 100 lei
         ArticolCos.objects.create(utilizator=self.client_user, produs=self.p2, cantitate=1)
 
-        # Subtotal așteptat: 6100.00 lei
         raspuns = self.client.get(reverse('cumparaturi:vizualizare_cos'))
         self.assertEqual(raspuns.status_code, 200)
         self.assertEqual(raspuns.context['subtotal'], Decimal('6100.00'))
-
-        # Singura metodă comună este Curier Rapid (20.00 lei)
         self.assertEqual(raspuns.context['cost_livrare'], Decimal('20.00'))
-        # Total: 6100 + 20 = 6120.00 lei
         self.assertEqual(raspuns.context['total'], Decimal('6120.00'))
 
     def test_intersectia_modalitatilor_de_livrare(self):
         """Verifică regula §6.1: doar opțiunile comune TUTUROR produselor din coș sunt oferite."""
         self.client.login(username='cumparator_cos', password='parola_cos')
 
-        # p1 suportă: Curier Rapid, Easybox
-        # p2 suportă: Curier Rapid, Showroom
-        # Intersecția trebuie să fie strict: [Curier Rapid]
         ArticolCos.objects.create(utilizator=self.client_user, produs=self.p1, cantitate=1)
         ArticolCos.objects.create(utilizator=self.client_user, produs=self.p2, cantitate=1)
 
@@ -345,3 +330,136 @@ class CosCumparaturiTest(TestCase):
         livrari_oferite = raspuns.context['livrari_comune']
         self.assertEqual(len(livrari_oferite), 1)
         self.assertEqual(livrari_oferite[0].nume, 'Curier Rapid')
+
+
+class FinalizareComandaTest(TestCase):
+    """Teste complete pentru procesul de checkout și plasare a comenzii (Cerința R2.2)."""
+
+    def setUp(self):
+        """Configurează clientul, produsul și modalitatea de livrare."""
+        self.client_user = User.objects.create_user(
+            username='client_checkout',
+            password='parola_client',
+            first_name='Mihai',
+            last_name='Ionescu'
+        )
+        self.cat = Categorie.objects.create(nume='Telefoane', slug='telefoane')
+        self.furnizor = Furnizor.objects.create(
+            nume='Furnizor GSM SRL',
+            email='gsm@furnizor.ro',
+            telefon='0788111222'
+        )
+        self.livrare = ModalitateLivrare.objects.create(
+            nume='Curier Express',
+            cost=Decimal('25.00'),
+            zile_estimate=1
+        )
+        self.produs = Produs.objects.create(
+            nume='Smartphone Galaxy S24',
+            slug='smartphone-galaxy-s24',
+            categorie=self.cat,
+            furnizor=self.furnizor,
+            pret=Decimal('4000.00'),
+            stoc=5,
+            activ=True
+        )
+        self.produs.modalitati_livrare.add(self.livrare)
+
+        # Date valide de checkout (card de test Visa cu algoritm Luhn valid)
+        self.date_checkout_valide = {
+            'nume_destinatar': 'Mihai Ionescu',
+            'telefon': '0722123456',
+            'adresa': 'Strada Teilor nr. 5',
+            'oras': 'Cluj-Napoca',
+            'judet': 'Cluj',
+            'cod_postal': '400001',
+            'modalitate_livrare': self.livrare.id,
+            'titular_card': 'MIHAI IONESCU',
+            'numar_card': '4242 4242 4242 4242',  # Luhn valid
+            'expirare_card': '12/28',             # În viitor
+            'cvv_card': '123',                    # 3 cifre
+        }
+
+    def test_checkout_reusit_scade_stoc_goleste_cos_si_creeaza_comanda(self):
+        """O comandă validă scade stocul, golește coșul, salvează comanda și snapshot-ul de preț."""
+        self.client.login(username='client_checkout', password='parola_client')
+
+        # Adăugăm 2 bucăți în coș (stocul inițial este 5)
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=2)
+
+        # Trimitere formular checkout
+        raspuns = self.client.post(reverse('cumparaturi:finalizare_comanda'), self.date_checkout_valide)
+
+        # Verificăm că am fost redirecționați pe pagina de confirmare
+        comanda = Comanda.objects.filter(utilizator=self.client_user).first()
+        self.assertIsNotNone(comanda)
+        self.assertRedirects(raspuns, reverse('cumparaturi:confirmare_comanda', kwargs={'comanda_id': comanda.id}))
+
+        # 1. Stocul a scăzut de la 5 la 3
+        self.produs.refresh_from_db()
+        self.assertEqual(self.produs.stoc, 3)
+
+        # 2. Coșul a fost golit complet
+        self.assertEqual(ArticolCos.objects.filter(utilizator=self.client_user).count(), 0)
+
+        # 3. Datele financiare sunt corecte (2 x 4000 = 8000 + 25 = 8025 lei)
+        self.assertEqual(comanda.subtotal, Decimal('8000.00'))
+        self.assertEqual(comanda.cost_livrare, Decimal('25.00'))
+        self.assertEqual(comanda.total, Decimal('8025.00'))
+
+        # 4. Securitate: din card se păstrează doar ultimele 4 cifre
+        self.assertEqual(comanda.card_ultimele4, '4242')
+
+        # 5. Snapshot linie de comandă
+        self.assertEqual(comanda.articole.count(), 1)
+        linie = comanda.articole.first()
+        self.assertEqual(linie.nume_produs, 'Smartphone Galaxy S24')
+        self.assertEqual(linie.pret_unitar, Decimal('4000.00'))
+        self.assertEqual(linie.cantitate, 2)
+
+    def test_stoc_insuficient_anuleaza_tranzactia(self):
+        """Dacă stocul scade între timp și devine insuficient, comanda este respinsă și nimic nu se salvează."""
+        self.client.login(username='client_checkout', password='parola_client')
+
+        # Adăugăm 3 bucăți în coș
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=3)
+
+        # Simulăm că alt cumpărător a cumpărat marfa și a rămas doar 1 bucată în stoc
+        self.produs.stoc = 1
+        self.produs.save()
+
+        raspuns = self.client.post(reverse('cumparaturi:finalizare_comanda'), self.date_checkout_valide)
+
+        # Nu s-a creat nicio comandă
+        self.assertEqual(Comanda.objects.filter(utilizator=self.client_user).count(), 0)
+        # Coșul a rămas neatins
+        self.assertEqual(ArticolCos.objects.filter(utilizator=self.client_user).count(), 1)
+        # Stocul a rămas 1
+        self.produs.refresh_from_db()
+        self.assertEqual(self.produs.stoc, 1)
+
+    def test_card_invalid_luhn_este_respins(self):
+        """Un card care nu trece algoritmul Luhn este respins la validare și nu se creează comandă."""
+        self.client.login(username='client_checkout', password='parola_client')
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=1)
+
+        date_card_gresit = self.date_checkout_valide.copy()
+        date_card_gresit['numar_card'] = '4532 0000 0000 0001'  # Luhn invalid
+
+        raspuns = self.client.post(reverse('cumparaturi:finalizare_comanda'), date_card_gresit)
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertContains(raspuns, "nu trece verificarea algoritmului Luhn")
+        self.assertEqual(Comanda.objects.count(), 0)
+
+    def test_card_expirat_este_respins(self):
+        """Un card cu data de expirare în trecut este respins."""
+        self.client.login(username='client_checkout', password='parola_client')
+        ArticolCos.objects.create(utilizator=self.client_user, produs=self.produs, cantitate=1)
+
+        date_card_expirat = self.date_checkout_valide.copy()
+        date_card_expirat['expirare_card'] = '01/20'  # Expirat
+
+        raspuns = self.client.post(reverse('cumparaturi:finalizare_comanda'), date_card_expirat)
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertContains(raspuns, "Cardul bancar este expirat")
+        self.assertEqual(Comanda.objects.count(), 0)

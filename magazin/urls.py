@@ -3,9 +3,9 @@ magazin/urls.py
 
 „Cuprinsul” central al adreselor magazinului online.
 Aici legăm fiecare secțiune din site de aplicația responsabilă:
-- /                  -> catalog (produse, categorii)
 - /conturi/          -> conturi (login, înregistrare, roluri)
-- /cumparaturi/      -> cumpărături (favorite, coș, checkout, comenzi)
+- /favorite/, /cos/, /comanda/, /comenzi/ -> cumpărături (favorite, coș, checkout, comenzi)
+- /, /produse/, /categorie/, /produs/    -> catalog (produse, categorii, CRUD admin)
 - /admin/            -> panoul de administrare nativ Django
 """
 
@@ -21,8 +21,8 @@ urlpatterns = [
     # Aplicația de autentificare și roluri
     path('conturi/', include('conturi.urls', namespace='conturi')),
 
-    # Aplicația pentru coș, favorite și comenzi
-    path('cumparaturi/', include('cumparaturi.urls', namespace='cumparaturi')),
+    # Aplicația pentru coș, favorite, checkout și comenzi (URL-uri de nivel 1 conform §5)
+    path('', include('cumparaturi.urls', namespace='cumparaturi')),
 
     # Catalogul de produse (rutele principale: /, /produse/, /produs/<slug>/ etc.)
     path('', include('catalog.urls', namespace='catalog')),

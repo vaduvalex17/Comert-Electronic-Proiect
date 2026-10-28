@@ -2,8 +2,10 @@
 cumparaturi/urls.py
 
 Maparea adreselor URL pentru cumpărături:
-- Favorite / Wishlist (R2.1)
-- Coș de cumpărături (R2.2)
+- Favorite / Wishlist (/favorite/ - R2.1)
+- Coș de cumpărături (/cos/ - R2.2)
+- Finalizare comandă / Checkout (/comanda/finalizare/ - R2.2)
+- Confirmare comandă (/comanda/<id>/confirmare/ - R2.2)
 """
 
 from django.urls import path
@@ -21,10 +23,16 @@ urlpatterns = [
     path('favorite/<int:favorit_id>/muta-in-cos/', views.muta_in_cos, name='muta_in_cos'),
 
     # -------------------------------------------------------------
-    # 2. Coșul de cumpărături (Cerința R2.2)
+    # 2. Coșul de cumpărături (Cerința R2.2 — Prima parte)
     # -------------------------------------------------------------
     path('cos/', views.vizualizare_cos, name='vizualizare_cos'),
     path('cos/adauga/<int:produs_id>/', views.adaugare_in_cos, name='adaugare_in_cos'),
     path('cos/actualizeaza/<int:articol_id>/', views.actualizeaza_cos, name='actualizeaza_cos'),
     path('cos/elimina/<int:articol_id>/', views.elimina_din_cos, name='elimina_din_cos'),
+
+    # -------------------------------------------------------------
+    # 3. Finalizare și Confirmare Comandă (Cerința R2.2 — A doua parte)
+    # -------------------------------------------------------------
+    path('comanda/finalizare/', views.finalizare_comanda, name='finalizare_comanda'),
+    path('comanda/<int:comanda_id>/confirmare/', views.confirmare_comanda, name='confirmare_comanda'),
 ]

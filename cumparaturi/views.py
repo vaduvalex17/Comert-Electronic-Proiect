@@ -1,13 +1,11 @@
 """
 cumparaturi/views.py
 
-Controllere (views) pentru cumpărături:
-1. Favorite (R2.1): vizualizare, adăugare/eliminare toggle, mutare în coș
-2. Coș de cumpărături (R2.2):
-   - vizualizare_cos: sumar comandă, calcul subtotal, intersecție modalități de livrare, cost transport, total
-   - adaugare_in_cos: adăugare produs respectând stocul disponibil
-   - actualizeaza_cos: modificare cantitate cu plafonare automată la stoc
-   - elimina_din_cos: ștergere articol din coș
+Controllere (views) pentru întregul flux de cumpărături:
+1. Favorite (R2.1): vizualizare listă, toggle adăugare/eliminare, mutare în coș
+2. Coș de cumpărături (R2.2): vizualizare, adăugare, actualizare cantitate, ștergere
+3. Finalizare comandă (R2.2): checkout, validare adresă și card, tranzacție atomică prin servicii.py
+4. Confirmare comandă (R2.2): sumarul final după plasarea cu succes a achiziției
 """
 
 from decimal import Decimal
@@ -15,7 +13,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from catalog.models import ModalitateLivrare, Produs
-from .models import ArticolCos, Favorit
+from .forms import FinalizareComandaForm
+from .models import ArticolCos, Comanda, Favorit
+from .servicii import StocInsuficient, plaseaza_comanda
 
 
 # =====================================================================
@@ -112,23 +112,14 @@ def muta_in_cos(request, favorit_id):
 
 @login_required
 def vizualizare_cos(request):
-    """Afișează coșul de cumpărături curent, sumarul comenzii și opțiunile de livrare.
-
-    Cerința R2.2:
-    - subtotal produse
-    - calcul modalități de livrare comune (intersecția tuturor produselor din coș conform §6.1)
-    - cost livrare și total general calculat strict pe server
-    """
-    # Pasul 1: Preluăm articolele din coșul utilizatorului
+    """Afișează coșul de cumpărături curent, sumarul comenzii și opțiunile de livrare."""
     articole = ArticolCos.objects.filter(
         utilizator=request.user
     ).select_related('produs', 'produs__categorie')
 
-    # Pasul 2: Calculăm subtotalul produselor
     subtotal = sum(articol.subtotal for articol in articole)
 
-    # Pasul 3: Calculăm intersecția modalităților de livrare
-    # Sunt oferite doar modalitățile compatibile cu TOATE produsele din coș
+    # Intersecția modalităților de livrare (§6.1)
     livrari_comune = []
     if articole.exists():
         qs_livrari = ModalitateLivrare.objects.all()
@@ -136,7 +127,6 @@ def vizualizare_cos(request):
             qs_livrari = qs_livrari.filter(produse=art.produs)
         livrari_comune = list(qs_livrari.distinct().order_by('cost'))
 
-    # Pasul 4: Determinăm modalitatea de livrare selectată
     livrare_id_cerut = request.GET.get('livrare') or request.session.get('livrare_id')
     livrare_selectata = None
 
@@ -147,7 +137,6 @@ def vizualizare_cos(request):
                 request.session['livrare_id'] = liv.id
                 break
 
-    # Dacă nu a fost selectată una validă, o alegem pe prima (cea mai ieftină)
     if not livrare_selectata and livrari_comune:
         livrare_selectata = livrari_comune[0]
         request.session['livrare_id'] = livrare_selectata.id
@@ -174,10 +163,8 @@ def adaugare_in_cos(request, produs_id):
         messages.warning(request, "Adăugarea în coș se realizează prin apăsarea butonului din pagină.")
         return redirect('catalog:acasa')
 
-    # Pasul 1: Căutăm produsul activ
     produs = get_object_or_404(Produs, pk=produs_id, activ=True)
 
-    # Pasul 2: Preluăm cantitatea dorită (implicit 1)
     try:
         cantitate_ceruta = int(request.POST.get('cantitate', 1))
         if cantitate_ceruta < 1:
@@ -185,13 +172,11 @@ def adaugare_in_cos(request, produs_id):
     except ValueError:
         cantitate_ceruta = 1
 
-    # Pasul 3: Verificăm dacă produsul este în stoc
     if produs.stoc <= 0:
         messages.error(request, f"Produsul «{produs.nume}» este epuizat din stoc.")
         referer = request.META.get('HTTP_REFERER')
         return redirect(referer or 'catalog:lista_produse')
 
-    # Pasul 4: Preluăm sau creăm articolul din coș
     articol_cos, creat = ArticolCos.objects.get_or_create(
         utilizator=request.user,
         produs=produs,
@@ -200,7 +185,6 @@ def adaugare_in_cos(request, produs_id):
 
     cantitate_noua = articol_cos.cantitate + cantitate_ceruta
 
-    # Pasul 5: Plafonăm cantitatea la stocul maxim disponibil
     if cantitate_noua > produs.stoc:
         articol_cos.cantitate = produs.stoc
         articol_cos.save()
@@ -213,7 +197,6 @@ def adaugare_in_cos(request, produs_id):
         articol_cos.save()
         messages.success(request, f"Produsul «{produs.nume}» a fost adăugat în coș!")
 
-    # Redirecționăm utilizatorul către pagina coșului
     return redirect('cumparaturi:vizualizare_cos')
 
 
@@ -223,10 +206,8 @@ def actualizeaza_cos(request, articol_id):
     if request.method != 'POST':
         return redirect('cumparaturi:vizualizare_cos')
 
-    # Pasul 1: Preluăm articolul din coș aparținând utilizatorului logat
     articol = get_object_or_404(ArticolCos, pk=articol_id, utilizator=request.user)
 
-    # Pasul 2: Validăm cantitatea transmisă
     try:
         cantitate = int(request.POST.get('cantitate', 1))
     except ValueError:
@@ -235,13 +216,11 @@ def actualizeaza_cos(request, articol_id):
     nume_produs = articol.produs.nume
     stoc_disponibil = articol.produs.stoc
 
-    # Pasul 3: Dacă cantitatea este <= 0, eliminăm produsul din coș
     if cantitate <= 0:
         articol.delete()
         messages.info(request, f"Produsul «{nume_produs}» a fost eliminat din coș.")
         return redirect('cumparaturi:vizualizare_cos')
 
-    # Pasul 4: Plafonăm la stocul existent
     if cantitate > stoc_disponibil:
         articol.cantitate = stoc_disponibil
         articol.save()
@@ -269,3 +248,104 @@ def elimina_din_cos(request, articol_id):
 
     messages.info(request, f"Produsul «{nume_produs}» a fost șters din coșul tău.")
     return redirect('cumparaturi:vizualizare_cos')
+
+
+# =====================================================================
+# SECȚIUNEA 3: FINALIZARE ȘI CONFIRMARE COMANDĂ (R2.2 — A doua parte)
+# =====================================================================
+
+@login_required
+def finalizare_comanda(request):
+    """Formularul de checkout pentru plasarea comenzii (Cerința R2.2).
+
+    Colectează datele de livrare, metoda de transport și detaliile de plată simulate.
+    Apelează logica tranzacțională din servicii.py.
+    """
+    # Pasul 1: Preluăm articolele din coș; dacă este gol, redirecționăm
+    articole = list(
+        ArticolCos.objects.filter(utilizator=request.user).select_related('produs')
+    )
+    if not articole:
+        messages.warning(request, "Coșul tău este gol. Adaugă cel puțin un produs înainte de a finaliza o comandă.")
+        return redirect('cumparaturi:vizualizare_cos')
+
+    # Pasul 2: Calculăm modalitățile de livrare comune
+    qs_livrari = ModalitateLivrare.objects.all()
+    for art in articole:
+        qs_livrari = qs_livrari.filter(produse=art.produs)
+    livrari_comune = qs_livrari.distinct().order_by('cost')
+
+    if not livrari_comune.exists():
+        messages.error(
+            request,
+            "Produsele din coșul tău au modalități de livrare incompatibile. "
+            "Te rugăm să ajustezi produsele din coș."
+        )
+        return redirect('cumparaturi:vizualizare_cos')
+
+    subtotal = sum(art.subtotal for art in articole)
+
+    # Pasul 3: Procesăm trimiterea formularului prin POST
+    if request.method == 'POST':
+        formular = FinalizareComandaForm(livrari_comune, request.POST)
+        if formular.is_valid():
+            try:
+                # Apelăm serviciul atomic de plasare a comenzii
+                comanda = plaseaza_comanda(
+                    utilizator=request.user,
+                    date_livrare=formular.cleaned_data,
+                    modalitate_livrare=formular.cleaned_data['modalitate_livrare'],
+                    numar_card=formular.cleaned_data['numar_card']
+                )
+                messages.success(request, f"Comanda ta #{comanda.id} a fost înregistrată cu succes!")
+                return redirect('cumparaturi:confirmare_comanda', comanda_id=comanda.id)
+
+            except StocInsuficient as eroare_stoc:
+                messages.error(request, str(eroare_stoc))
+            except ValueError as eroare_val:
+                messages.error(request, str(eroare_val))
+        else:
+            messages.error(request, "Formularul conține erori. Te rugăm să verifici datele introduse.")
+    else:
+        # Pasul 4: Completăm valori inițiale prietenoase la încărcarea paginii GET
+        nume_implicit = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+        livrare_initiala_id = request.session.get('livrare_id')
+        livrare_initiala = None
+        if livrare_initiala_id:
+            livrare_initiala = livrari_comune.filter(id=livrare_initiala_id).first()
+
+        formular = FinalizareComandaForm(
+            livrari_permise=livrari_comune,
+            initial={
+                'nume_destinatar': nume_implicit,
+                'titular_card': nume_implicit.upper(),
+                'modalitate_livrare': livrare_initiala or livrari_comune.first(),
+            }
+        )
+
+    context = {
+        'form': formular,
+        'articole': articole,
+        'subtotal': subtotal,
+        'livrari_comune': livrari_comune,
+        'titlu': 'Finalizare Comandă (Checkout)',
+    }
+    return render(request, 'cumparaturi/finalizare.html', context)
+
+
+@login_required
+def confirmare_comanda(request, comanda_id):
+    """Afișează pagina de confirmare („Mulțumim pentru comandă”) pentru o comandă plasată (R2.2)."""
+    # Pasul 1: Preluăm comanda, asigurându-ne că aparține clientului logat
+    comanda = get_object_or_404(
+        Comanda.objects.prefetch_related('articole'),
+        id=comanda_id,
+        utilizator=request.user
+    )
+
+    context = {
+        'comanda': comanda,
+        'articole': comanda.articole.all(),
+        'titlu': f"Confirmare Comandă #{comanda.id}",
+    }
+    return render(request, 'cumparaturi/confirmare.html', context)

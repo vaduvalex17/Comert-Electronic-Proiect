@@ -1,0 +1,221 @@
+{# cumparaturi/templates/cumparaturi/finalizare.html #}
+{# Pagina de checkout și introducere date de livrare + card simulat (Cerința R2.2) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Finalizare Comandă{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cumparaturi:vizualizare_cos' %}" class="text-decoration-none">Coș</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Finalizare comandă</li>
+        </ol>
+    </nav>
+
+    {# Banner securitate și avertizare plată simulată #}
+    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4 p-3 rounded-3" role="alert">
+        <i class="bi bi-shield-lock-fill fs-2 text-primary me-3"></i>
+        <div>
+            <h6 class="alert-heading fw-bold mb-1">Mediu de testare universitar — Plată simulată</h6>
+            <div class="small">
+                <strong>Nu introduce date bancare reale!</strong> Această aplicație folosește un sistem demonstrativ de validare a cardului.
+                Poți folosi cardul de test: <code>4242 4242 4242 4242</code>, expirare: <code>12/28</code>, CVV: <code>123</code>.
+            </div>
+        </div>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-4">
+            {# Coloana stângă: Formular livrare și card #}
+            <div class="col-lg-8">
+                {# Card 1: Date de Livrare #}
+                <div class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-geo-alt text-primary me-2"></i>1. Date de Expediere (Livrare)
+                    </h5>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.nume_destinatar.id_for_label }}" class="form-label fw-semibold">
+                                Nume Destinatar <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nume_destinatar }}
+                            {% if form.nume_destinatar.errors %}
+                                <div class="text-danger small mt-1">{{ form.nume_destinatar.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.telefon.id_for_label }}" class="form-label fw-semibold">
+                                Număr de Telefon <span class="text-danger">*</span>
+                            </label>
+                            {{ form.telefon }}
+                            {% if form.telefon.errors %}
+                                <div class="text-danger small mt-1">{{ form.telefon.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.adresa.id_for_label }}" class="form-label fw-semibold">
+                            Adresă Completă (stradă, număr, bloc, etaj, apartament) <span class="text-danger">*</span>
+                        </label>
+                        {{ form.adresa }}
+                        {% if form.adresa.errors %}
+                            <div class="text-danger small mt-1">{{ form.adresa.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.oras.id_for_label }}" class="form-label fw-semibold">
+                                Oraș <span class="text-danger">*</span>
+                            </label>
+                            {{ form.oras }}
+                            {% if form.oras.errors %}
+                                <div class="text-danger small mt-1">{{ form.oras.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.judet.id_for_label }}" class="form-label fw-semibold">
+                                Județ / Sector <span class="text-danger">*</span>
+                            </label>
+                            {{ form.judet }}
+                            {% if form.judet.errors %}
+                                <div class="text-danger small mt-1">{{ form.judet.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.cod_postal.id_for_label }}" class="form-label fw-semibold">
+                                Cod Poștal <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cod_postal }}
+                            {% if form.cod_postal.errors %}
+                                <div class="text-danger small mt-1">{{ form.cod_postal.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Card 2: Modalitate de Livrare #}
+                <div class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-truck text-primary me-2"></i>2. Alege Modalitatea de Livrare
+                    </h5>
+                    <div class="list-group">
+                        {% for radio in form.modalitate_livrare %}
+                            <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 border rounded-3 mb-2 cursor-pointer">
+                                {{ radio.tag }}
+                                <div class="flex-grow-1">
+                                    <span class="fw-semibold text-dark">{{ radio.choice_label }}</span>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.modalitate_livrare.errors %}
+                        <div class="text-danger small mt-1">{{ form.modalitate_livrare.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                {# Card 3: Date Card Bancar #}
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-credit-card-2-front text-primary me-2"></i>3. Plată cu Cardul Bancar (Simulată)
+                    </h5>
+
+                    <div class="mb-3">
+                        <label for="{{ form.titular_card.id_for_label }}" class="form-label fw-semibold">
+                            Titular Card <span class="text-danger">*</span>
+                        </label>
+                        {{ form.titular_card }}
+                        {% if form.titular_card.errors %}
+                            <div class="text-danger small mt-1">{{ form.titular_card.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.numar_card.id_for_label }}" class="form-label fw-semibold">
+                            Număr Card <span class="text-danger">*</span>
+                        </label>
+                        {{ form.numar_card }}
+                        {% if form.numar_card.errors %}
+                            <div class="text-danger small mt-1">{{ form.numar_card.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text small">Se verifică automat algoritmul Luhn (16 cifre).</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="{{ form.expirare_card.id_for_label }}" class="form-label fw-semibold">
+                                Expirare (LL/AA) <span class="text-danger">*</span>
+                            </label>
+                            {{ form.expirare_card }}
+                            {% if form.expirare_card.errors %}
+                                <div class="text-danger small mt-1">{{ form.expirare_card.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label for="{{ form.cvv_card.id_for_label }}" class="form-label fw-semibold">
+                                Cod CVV (3 cifre) <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cvv_card }}
+                            {% if form.cvv_card.errors %}
+                                <div class="text-danger small mt-1">{{ form.cvv_card.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Buton de trimitere comandă #}
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'cumparaturi:vizualizare_cos' %}" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Înapoi la coș
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                        <i class="bi bi-lock-fill me-1"></i> Plasează Comanda
+                    </button>
+                </div>
+            </div>
+
+            {# Coloana dreaptă: Sumar produse comandate #}
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-3 bg-white p-4 sticky-top" style="top: 80px;">
+                    <h5 class="fw-bold text-dark border-bottom pb-3 mb-3">
+                        <i class="bi bi-bag-check text-primary me-2"></i>Produse în Comandă
+                    </h5>
+
+                    <div class="list-group list-group-flush mb-3">
+                        {% for art in articole %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <div>
+                                    <div class="fw-semibold text-dark small">{{ art.produs.nume }}</div>
+                                    <small class="text-muted">{{ art.cantitate }} buc. x {{ art.produs.pret }} lei</small>
+                                </div>
+                                <span class="fw-bold small">{{ art.subtotal }} lei</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted small">
+                        <span>Subtotal produse:</span>
+                        <span class="fw-semibold text-dark">{{ subtotal }} lei</span>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark">Subtotal:</span>
+                        <span class="fs-5 fw-bold text-primary">{{ subtotal }} lei</span>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        * Costul exact de livrare se va aplica în funcție de opțiunea selectată.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

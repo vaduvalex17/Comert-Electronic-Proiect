@@ -27,6 +27,10 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Adăugare în coș (R2.2)** | `cumparaturi/views.py` | `adaugare_in_cos()` | Adăugare produs cu plafonare la stoc |
 | **Modificare cantitate (R2.2)**| `cumparaturi/views.py` | `actualizeaza_cos()` | Actualizare cantitate sau ștergere dacă e 0 |
 | **Eliminare din coș (R2.2)** | `cumparaturi/views.py` | `elimina_din_cos()` | Ștergere articol din coșul clientului |
+| **Formular Checkout (R2.2)** | `cumparaturi/forms.py` | `FinalizareComandaForm` | Validare date adresă și card Luhn / expirare / CVV |
+| **Tranzacție Comandă (R2.2)** | `cumparaturi/servicii.py` | `plaseaza_comanda()` | Tranzacție atomică, verificare stoc și snapshot |
+| **Checkout View (R2.2)** | `cumparaturi/views.py` | `finalizare_comanda()` | Preluare date livrare și plată simulată |
+| **Confirmare Comandă (R2.2)**| `cumparaturi/views.py` | `confirmare_comanda()` | Pagina de succes cu detaliile comenzii plasate |
 | **Contoare Coș & Favorite** | `cumparaturi/context_processors.py` | `cumparaturi_meniu()` | Calculează insignele numerice din meniul de sus |
 | **Categorii în Navbar** | `catalog/context_processors.py` | `categorii_globale()` | Încarcă automat categoriile în meniul dropdown |
 | **Șablon de bază (HTML)** | `templates/baza.html` | Schelet HTML | Meniu, Bootstrap, mesaje flash, subsol |
@@ -48,8 +52,9 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 
 ## 2. Ghid rapid de orientare în proiect
 
-1. **Vrei să modifici logica coșului sau a sumarului?** Deschide `cumparaturi/views.py` la `vizualizare_cos`.
-2. **Vrei să vezi cum se calculează intersecția metodelor de livrare?** Verifică pasul 3 din `vizualizare_cos` în `cumparaturi/views.py`.
-3. **Vrei să modifici lista de favorite (Wishlist)?** Deschide `cumparaturi/templates/cumparaturi/favorite.html`.
-4. **Vrei să modifici panoul de administrare produse?** Deschide `catalog/views_admin.py`.
-5. **Vrei să modifici căutarea sau paginarea?** Deschide `catalog/views.py`.
+1. **Vrei să vezi cum este procesată tranzacția unei comenzi?** Deschide `cumparaturi/servicii.py`.
+2. **Vrei să verifici cum se validează cardul cu algoritmul Luhn?** Deschide `cumparaturi/forms.py` la metoda `clean_numar_card`.
+3. **Vrei să modifici pagina de checkout sau confirmare?** Deschide `cumparaturi/templates/cumparaturi/finalizare.html` sau `confirmare.html`.
+4. **Vrei să modifici coșul sau intersecția livrărilor?** Deschide `cumparaturi/views.py`.
+5. **Vrei să modifici lista de favorite?** Deschide `cumparaturi/templates/cumparaturi/favorite.html`.
+6. **Vrei să modifici panoul de administrare produse?** Deschide `catalog/views_admin.py`.
