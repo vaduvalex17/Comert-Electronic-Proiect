@@ -55,7 +55,7 @@
                                     {% if item.produs.imagine %}
                                         <img src="{{ item.produs.imagine.url }}" class="rounded border object-fit-contain" width="56" height="56" alt="{{ item.produs.nume }}">
                                     {% else %}
-                                        <img src="{% static 'img/produs_implicit.svg' %}" class="rounded border opacity-50" width="56" height="56" alt="Implicit">
+                                        <img src="{% static item.produs.imagine_implicita %}" class="rounded border" width="56" height="56" alt="Implicit">
                                     {% endif %}
                                 </td>
 

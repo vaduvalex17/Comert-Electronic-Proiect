@@ -30,7 +30,7 @@
                     {% if produs.imagine %}
                         <img src="{{ produs.imagine.url }}" class="img-fluid rounded-3 object-fit-contain" style="max-height: 400px;" alt="{{ produs.nume }}">
                     {% else %}
-                        <img src="{% static 'img/produs_implicit.svg' %}" class="img-fluid rounded-3 opacity-75" style="max-height: 350px;" alt="{{ produs.nume }}">
+                        <img src="{% static produs.imagine_implicita %}" class="img-fluid rounded-3 " style="max-height: 350px;" alt="{{ produs.nume }}">
                     {% endif %}
                 </div>
             </div>

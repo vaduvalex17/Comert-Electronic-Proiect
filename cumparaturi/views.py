@@ -19,6 +19,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from catalog.models import ModalitateLivrare, Produs
 from conturi.decoratori import doar_admin
+from conturi.redirectionari import redirectioneaza_sigur
 from .forms import FinalizareComandaForm
 from .models import ArticolCos, CodReducere, Comanda, Favorit
 from .servicii import StocInsuficient, plaseaza_comanda
@@ -59,10 +60,8 @@ def adauga_elimina_favorit(request, produs_id):
         Favorit.objects.create(utilizator=request.user, produs=produs)
         messages.success(request, f"Produsul «{produs.nume}» a fost adăugat cu succes în Favorite!")
 
-    referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
-    return redirect('cumparaturi:lista_favorite')
+    # Ne întoarcem pe pagina de unde a venit clientul (doar dacă e o pagină a magazinului)
+    return redirectioneaza_sigur(request, request.META.get('HTTP_REFERER'), 'cumparaturi:lista_favorite')
 
 
 @login_required
@@ -249,8 +248,7 @@ def adaugare_in_cos(request, produs_id):
 
     if produs.stoc <= 0:
         messages.error(request, f"Produsul «{produs.nume}» este epuizat din stoc.")
-        referer = request.META.get('HTTP_REFERER')
-        return redirect(referer or 'catalog:lista_produse')
+        return redirectioneaza_sigur(request, request.META.get('HTTP_REFERER'), 'catalog:lista_produse')
 
     articol_cos, creat = ArticolCos.objects.get_or_create(
         utilizator=request.user,

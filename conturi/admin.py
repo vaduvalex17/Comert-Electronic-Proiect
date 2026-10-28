@@ -1,3 +1,7 @@
-from django.contrib import admin
+"""
+conturi/admin.py
 
-# Register your models here.
+Aplicația `conturi` nu are modele proprii: folosește modelul `User` încorporat în Django,
+care apare deja automat în panoul /admin/ (secțiunea „Utilizatori”). De aceea fișierul
+nu înregistrează nimic.
+"""

@@ -58,6 +58,8 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Deconectare sigură (POST)**| `conturi/views.py` | `logout_utilizator()` | Deconectare prin POST cu token CSRF |
 | **Înregistrare Client (R1.1)**| `conturi/views.py` | `inregistrare_utilizator()`| Creare cont client (non-staff) |
 | **Restricție Rol Admin** | `conturi/decoratori.py` | `@doar_admin` | Blochează accesul clienților pe paginile admin |
+| **Redirecționare sigură** | `conturi/redirectionari.py` | `redirectioneaza_sigur()` | Întoarce utilizatorul pe pagina anterioară doar dacă e din site (anti open redirect) |
+| **Ilustrație implicită produs** | `catalog/models.py` | `Produs.imagine_implicita` | Alege ilustrația categoriei când produsul nu are poză (`static/img/categorii/`) |
 
 ---
 

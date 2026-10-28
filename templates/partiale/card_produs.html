@@ -35,7 +35,7 @@
         {% if produs.imagine %}
             <img src="{{ produs.imagine.url }}" class="img-fluid h-100 w-100 object-fit-contain" alt="{{ produs.nume }}">
         {% else %}
-            <img src="{% static 'img/produs_implicit.svg' %}" class="img-fluid h-100 w-100 object-fit-contain opacity-75" alt="{{ produs.nume }}">
+            <img src="{% static produs.imagine_implicita %}" class="img-fluid h-100 w-100 object-fit-contain " alt="{{ produs.nume }}">
         {% endif %}
     </a>
 

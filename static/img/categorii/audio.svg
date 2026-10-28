@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Ilustrație implicită pentru categoria Audio & Căști -->
+  <rect width="400" height="300" fill="#f6effa"/>
+  <path d="M130 175 V150 A70 70 0 0 1 270 150 V175" fill="none" stroke="#7a45a8" stroke-width="10" stroke-linecap="round"/>
+  <rect x="112" y="160" width="42" height="68" rx="16" fill="#7a45a8"/>
+  <rect x="246" y="160" width="42" height="68" rx="16" fill="#7a45a8"/>
+  <rect x="122" y="172" width="22" height="44" rx="10" fill="#e6d6f2"/>
+  <rect x="256" y="172" width="22" height="44" rx="10" fill="#e6d6f2"/>
+</svg>

@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render
 from .forms import FormularAutentificare, FormularInregistrare
+from .redirectionari import redirectioneaza_sigur
 
 
 def login_utilizator(request):
@@ -30,11 +31,9 @@ def login_utilizator(request):
             login(request, utilizator)
             messages.success(request, f"Bine ai revenit, {utilizator.username}!")
 
-            # Redirecționăm către pagina cerută anterior (dacă există în parametrul 'next') sau la Acasă
-            adresa_urmatoare = request.GET.get('next')
-            if adresa_urmatoare:
-                return redirect(adresa_urmatoare)
-            return redirect('catalog:acasa')
+            # Redirecționăm către pagina cerută anterior (parametrul 'next') sau la Acasă.
+            # redirectioneaza_sigur refuză adresele către alte site-uri (protecție „open redirect”).
+            return redirectioneaza_sigur(request, request.GET.get('next'), 'catalog:acasa')
         else:
             messages.error(request, "Autentificarea a eșuat. Verifică datele introduse.")
     else:

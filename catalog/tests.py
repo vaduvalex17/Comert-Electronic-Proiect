@@ -719,3 +719,28 @@ class AdminDashboardTest(TestCase):
 
 
 
+
+
+class PopuleazaDateTest(TestCase):
+    """Verifică datele demo de care depinde scenariul de prezentare."""
+
+    def test_produsele_mari_nu_au_easybox_iar_comanda_nu_dubleaza(self):
+        """Produsele voluminoase nu au Easybox (demo intersecție livrări), iar rularea repetată nu creează dubluri."""
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('populeaza_date', stdout=StringIO())
+        call_command('populeaza_date', stdout=StringIO())
+
+        self.assertEqual(Produs.objects.count(), 20)
+        laptop = Produs.objects.get(slug='laptop-gaming-asus-rog-strix-g16')
+        mouse = Produs.objects.get(slug='mouse-wireless-logitech-mx-master-3s')
+        self.assertFalse(laptop.modalitati_livrare.filter(nume__icontains='Easybox').exists())
+        self.assertTrue(mouse.modalitati_livrare.filter(nume__icontains='Easybox').exists())
+
+    def test_imagine_implicita_pe_categorie(self):
+        """Produsele fără poză primesc ilustrația categoriei lor."""
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('populeaza_date', stdout=StringIO())
+        laptop = Produs.objects.get(slug='laptop-gaming-asus-rog-strix-g16')
+        self.assertEqual(laptop.imagine_implicita, 'img/categorii/laptopuri.svg')

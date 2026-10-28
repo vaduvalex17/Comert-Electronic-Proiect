@@ -228,6 +228,17 @@ class Produs(models.Model):
         return perechi
 
     @property
+    def imagine_implicita(self):
+        """Calea (în static/) a ilustrației afișate când produsul nu are poză încărcată.
+
+        Pentru categoriile demo există câte o ilustrație proprie (static/img/categorii/<slug>.svg);
+        pentru orice altă categorie se folosește imaginea generică „Fără imagine”.
+        """
+        if self.categorie.slug in ('laptopuri', 'telefoane', 'audio', 'periferice'):
+            return f"img/categorii/{self.categorie.slug}.svg"
+        return "img/produs_implicit.svg"
+
+    @property
     def in_stoc(self):
         """Verifică dacă produsul este disponibil pentru comandă."""
         return self.stoc > 0

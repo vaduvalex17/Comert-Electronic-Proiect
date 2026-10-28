@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Ilustrație implicită pentru categoria Laptopuri (folosită când produsul nu are poză) -->
+  <rect width="400" height="300" fill="#eef3fb"/>
+  <rect x="110" y="80" width="180" height="115" rx="8" fill="#ffffff" stroke="#3b6fb6" stroke-width="6"/>
+  <rect x="124" y="94" width="152" height="87" rx="3" fill="#d7e4f6"/>
+  <path d="M80 205 H320 L305 222 H95 Z" fill="#3b6fb6"/>
+  <rect x="180" y="205" width="40" height="5" rx="2" fill="#d7e4f6"/>
+</svg>

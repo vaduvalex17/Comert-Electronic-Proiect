@@ -331,6 +331,16 @@ class Command(BaseCommand):
             },
         ]
 
+        # Produsele voluminoase nu încap într-un Easybox, deci nu primesc această metodă de livrare.
+        # Astfel, în coș se vede „intersecția livrărilor”: dacă adaugi unul dintre ele,
+        # opțiunea Easybox dispare automat.
+        produse_fara_easybox = {
+            "laptop-gaming-asus-rog-strix-g16",
+            "soundbar-samsung-hw-q990d-11-1-4",
+            "monitor-gaming-lg-ultragear-27gp850p-b",
+        }
+        easybox = next(m for m in modalitati_livrare if "Easybox" in m.nume)
+
         total_create = 0
         for date_p in produse_date:
             prod, creat = Produs.objects.get_or_create(
@@ -346,8 +356,11 @@ class Command(BaseCommand):
                     "activ": True,
                 }
             )
-            # Asociem toate modalitățile de livrare
-            prod.modalitati_livrare.set(modalitati_livrare)
+            # Asociem modalitățile de livrare (toate, mai puțin Easybox pentru produsele mari)
+            if date_p["slug"] in produse_fara_easybox:
+                prod.modalitati_livrare.set([m for m in modalitati_livrare if m != easybox])
+            else:
+                prod.modalitati_livrare.set(modalitati_livrare)
             if creat:
                 total_create += 1
 

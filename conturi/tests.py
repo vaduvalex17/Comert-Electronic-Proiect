@@ -148,3 +148,29 @@ class DecoratorDoarAdminTest(TestCase):
         raspuns = self.view_protejat(request)
         self.assertEqual(raspuns.status_code, 200)
         self.assertIn("Acces permis", raspuns.content.decode('utf-8'))
+
+
+class RedirectionareSiguraTest(TestCase):
+    """Verifică protecția „open redirect”: după login sau după o acțiune nu plecăm pe alt site."""
+
+    def setUp(self):
+        """Creează un client cu care ne autentificăm."""
+        User.objects.create_user(username='client_redir', password='ParolaTest123!')
+
+    def test_login_cu_next_intern_redirectioneaza_acolo(self):
+        """Un `next` din același site (ex: /cos/) este respectat."""
+        raspuns = self.client.post(
+            reverse('conturi:login') + '?next=/cos/',
+            {'username': 'client_redir', 'password': 'ParolaTest123!'}
+        )
+        self.assertEqual(raspuns.status_code, 302)
+        self.assertEqual(raspuns.url, '/cos/')
+
+    def test_login_cu_next_extern_este_ignorat(self):
+        """Un `next` către alt site este refuzat, iar utilizatorul ajunge pe Acasă."""
+        raspuns = self.client.post(
+            reverse('conturi:login') + '?next=https://site-strain.example/',
+            {'username': 'client_redir', 'password': 'ParolaTest123!'}
+        )
+        self.assertEqual(raspuns.status_code, 302)
+        self.assertEqual(raspuns.url, reverse('catalog:acasa'))

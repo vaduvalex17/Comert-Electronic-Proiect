@@ -6,7 +6,7 @@ Acest ghid este dedicat utilizatorului non-tehnic. Urmează pașii de mai jos pe
 
 ## Pasul 1: Verifică dacă ai Python instalat
 
-Aplicația necesită **Python 3.12** sau o versiune mai nouă.
+Aplicația necesită **Python 3.12** sau o versiune mai nouă (funcționează și cu 3.10 / 3.11, dar 3.12+ e recomandat).
 Deschide un terminal (pe Linux/macOS) sau Command Prompt / PowerShell (pe Windows) și tastează:
 
 ```bash
@@ -63,4 +63,9 @@ Când ai terminat prezentarea sau testarea:
 |---|---|---|
 | `Port 8000 already in use` | Serverul a rămas pornit într-o altă fereastră | Oprește procesul precedent sau rulează `python manage.py runserver 8080` |
 | `No module named django` | Nu este activat mediul virtual | Folosește direct scriptul `./pornire.sh` sau `pornire.bat` |
+| Fereastra `pornire.bat` se închide imediat sau scrie „Python nu a fost găsit” | Python nu e instalat sau nu e în PATH | Reinstalează Python și bifează „Add python.exe to PATH”, apoi repornește calculatorul |
+| `'python3' / 'python' is not recognized` | La fel ca mai sus | La fel ca mai sus |
+| Pe Windows apare „Windows protected your PC” la dublu click | Filtrul SmartScreen | Apasă „More info” → „Run anyway” (scriptul e doar text și poate fi citit cu Notepad) |
+| Pagina nu se încarcă în browser | Serverul nu rulează | Fereastra neagră a scriptului trebuie să rămână deschisă cât timp folosești site-ul |
+| Vreau să o iau de la zero cu datele demo | — | Oprește serverul, șterge fișierul `db.sqlite3` și pornește din nou scriptul |
 | Imaginile produselor nu se văd | Lipsește folderul `media/` | Folderul se generează automat la încărcarea primului produs |

@@ -179,7 +179,7 @@ def produse_categorie(request, slug):
     produse_qs = Produs.objects.filter(
         categorie=categorie,
         activ=True
-    ).select_related('furnizor')
+    ).select_related('categorie', 'furnizor')
 
     # Pasul 3: Paginare pentru categoria selectată (12 produse pe pagină)
     paginator = Paginator(produse_qs, 12)
@@ -220,7 +220,7 @@ def detaliu_produs(request, slug):
     produse_similare = Produs.objects.filter(
         categorie=produs.categorie,
         activ=True
-    ).exclude(pk=produs.pk)[:4]
+    ).select_related('categorie').exclude(pk=produs.pk)[:4]
 
     # Pasul 5: Recenzii și verificare dacă utilizatorul este cumpărător verificat (Bonus Faza 9)
     recenzii = produs.recenzii.select_related('utilizator').order_by('-creata_la')

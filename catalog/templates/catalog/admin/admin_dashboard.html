@@ -38,7 +38,8 @@
                         <i class="bi bi-cash-stack fs-5"></i>
                     </div>
                 </div>
-                <div class="fs-4 fw-bold text-dark mb-0">{{ venituri_totale }} <span class="fs-6 text-muted">lei</span></div>
+                {# floatformat:2 — SQLite întoarce sumele adunate cu multe zecimale; afișăm doar 2 #}
+                <div class="fs-4 fw-bold text-dark mb-0">{{ venituri_totale|floatformat:2 }} <span class="fs-6 text-muted">lei</span></div>
                 <small class="text-success mt-1 d-block"><i class="bi bi-check-circle me-1"></i>Comenzi active</small>
             </div>
         </div>
@@ -114,7 +115,7 @@
                                             <span class="badge bg-primary px-2 py-1">{{ item.bucati }} buc.</span>
                                         </td>
                                         <td class="text-end fw-bold text-dark">
-                                            {{ item.venit }} lei
+                                            {{ item.venit|floatformat:2 }} lei
                                         </td>
                                     </tr>
                                 {% endfor %}
