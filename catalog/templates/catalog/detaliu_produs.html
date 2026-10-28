@@ -114,13 +114,18 @@
                             </button>
                         {% endif %}
 
-                        <form method="post" action="#" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="produs_id" value="{{ produs.id }}">
-                            <button type="submit" class="btn btn-outline-danger btn-lg px-3" title="Salvează în Favorite">
+                        {% if user.is_authenticated %}
+                            <form method="post" action="{% url 'cumparaturi:adauga_elimina_favorit' produs_id=produs.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn {% if produs.id in utilizator_favorite_ids %}btn-danger{% else %}btn-outline-danger{% endif %} btn-lg px-3" title="Salvează sau elimină din Favorite">
+                                    <i class="bi {% if produs.id in utilizator_favorite_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                                </button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'conturi:login' %}?next={{ request.path }}" class="btn btn-outline-danger btn-lg px-3" title="Autentifică-te pentru a salva în Favorite">
                                 <i class="bi bi-heart"></i>
-                            </button>
-                        </form>
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

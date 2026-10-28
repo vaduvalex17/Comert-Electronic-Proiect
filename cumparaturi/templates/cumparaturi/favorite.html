@@ -1,0 +1,138 @@
+{# cumparaturi/templates/cumparaturi/favorite.html #}
+{# Pagina cu lista de dorințe a clientului (Wishlist - Cerința R2.1) #}
+{% extends "baza.html" %}
+{% load static %}
+
+{% block titlu %}Produse Favorite{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Favorite</li>
+        </ol>
+    </nav>
+
+    {# Antet pagină #}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 bg-white p-4 rounded-3 shadow-sm border">
+        <div>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1">
+                <i class="bi bi-heart-fill me-1"></i> Wishlist
+            </span>
+            <h1 class="h3 fw-bold mb-1">Produsele Tale Favorite</h1>
+            <p class="text-muted small mb-0">
+                Aici găsești produsele pe care le-ai salvat pentru a le comanda mai târziu (Cerința R2.1).
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-light text-secondary border px-3 py-2 fs-6">
+                {{ favorite.count }} {% if favorite.count == 1 %}produs salvat{% else %}produse salvate{% endif %}
+            </span>
+        </div>
+    </div>
+
+    {# Lista de produse #}
+    {% if favorite %}
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Poză</th>
+                            <th>Produs</th>
+                            <th>Preț unitar</th>
+                            <th>Stare stoc</th>
+                            <th class="text-end" style="width: 250px;">Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in favorite %}
+                            <tr>
+                                {# Poză #}
+                                <td>
+                                    {% if item.produs.imagine %}
+                                        <img src="{{ item.produs.imagine.url }}" class="rounded border object-fit-contain" width="56" height="56" alt="{{ item.produs.nume }}">
+                                    {% else %}
+                                        <img src="{% static 'img/produs_implicit.svg' %}" class="rounded border opacity-50" width="56" height="56" alt="Implicit">
+                                    {% endif %}
+                                </td>
+
+                                {# Denumire și categorie #}
+                                <td>
+                                    <div class="fw-bold">
+                                        <a href="{% url 'catalog:detaliu_produs' slug=item.produs.slug %}" class="text-decoration-none text-dark">
+                                            {{ item.produs.nume }}
+                                        </a>
+                                    </div>
+                                    <small class="text-muted">
+                                        Categorie: {{ item.produs.categorie.nume }} | Salvat pe: {{ item.adaugat_la|date:"d.m.Y" }}
+                                    </small>
+                                </td>
+
+                                {# Preț #}
+                                <td>
+                                    <span class="fw-bold text-primary fs-6">{{ item.produs.pret }} lei</span>
+                                </td>
+
+                                {# Stoc #}
+                                <td>
+                                    {% if item.produs.stoc <= 0 %}
+                                        <span class="badge bg-danger">Indisponibil</span>
+                                    {% elif item.produs.stoc <= 5 %}
+                                        <span class="badge bg-warning text-dark">Stoc limitat ({{ item.produs.stoc }})</span>
+                                    {% else %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">În stoc</span>
+                                    {% endif %}
+                                </td>
+
+                                {# Butoane Acțiuni: Mută în coș și Elimină #}
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        {# Formular Mută în coș #}
+                                        {% if item.produs.in_stoc %}
+                                            <form method="post" action="{% url 'cumparaturi:muta_in_cos' favorit_id=item.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-primary fw-semibold" title="Mută în coșul de cumpărături">
+                                                    <i class="bi bi-cart-plus me-1"></i> Mută în coș
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-secondary" disabled title="Produsul este epuizat">
+                                                <i class="bi bi-x-circle me-1"></i> Epuizat
+                                            </button>
+                                        {% endif %}
+
+                                        {# Formular Elimină din favorite #}
+                                        <form method="post" action="{% url 'cumparaturi:elimina_favorit' favorit_id=item.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimină din favorite">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        {# Stare goală (Empty State) #}
+        <div class="text-center py-5 bg-white rounded-3 shadow-sm border my-4">
+            <div class="text-danger opacity-50 mb-3" style="font-size: 4rem;">
+                <i class="bi bi-heartbreak"></i>
+            </div>
+            <h4 class="fw-bold">Lista ta de favorite este goală</h4>
+            <p class="text-muted col-md-6 mx-auto mb-4">
+                Nu ai salvat încă niciun produs. Când găsești un produs care îți place, apasă pe iconița cu inimă pentru a-l regăsi cu ușurință aici.
+            </p>
+            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-primary px-4 fw-semibold">
+                <i class="bi bi-grid me-2"></i> Explorează Catalogul
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

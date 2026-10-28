@@ -3,8 +3,24 @@
 {# Primește ca variabilă: 'produs' #}
 {% load static %}
 <div class="card h-100 shadow-sm border-0 position-relative">
+    {# Buton Favorite (inimă) în colțul din stânga-sus (Cerința R2.1) #}
+    {% if user.is_authenticated %}
+        <div class="position-absolute top-0 start-0 m-2" style="z-index: 3;">
+            <form method="post" action="{% url 'cumparaturi:adauga_elimina_favorit' produs_id=produs.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-light rounded-circle shadow-sm p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Adaugă sau elimină din favorite">
+                    {% if produs.id in utilizator_favorite_ids %}
+                        <i class="bi bi-heart-fill text-danger fs-6"></i>
+                    {% else %}
+                        <i class="bi bi-heart text-muted fs-6"></i>
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
     {# Badge stoc în colțul din dreapta-sus #}
-    <div class="position-absolute top-0 end-0 m-2">
+    <div class="position-absolute top-0 end-0 m-2" style="z-index: 2;">
         {% if produs.stoc <= 0 %}
             <span class="badge bg-danger shadow-sm">Indisponibil</span>
         {% elif produs.stoc <= 5 %}

@@ -71,6 +71,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'catalog.context_processors.categorii_globale',
+                'cumparaturi.context_processors.cumparaturi_meniu',
             ],
         },
     },
