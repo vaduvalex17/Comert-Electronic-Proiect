@@ -15,6 +15,11 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Catalog Produse (R1.4)** | `catalog/views.py` | `lista_produse()` | Listă produse, căutare `?q=` și paginare (12/pag) |
 | **Filtrare Categorie (R1.4)** | `catalog/views.py` | `produse_categorie()` | Răsfoirea produselor pe categorii |
 | **Detaliu Produs (R1.3)** | `catalog/views.py` | `detaliu_produs()` | Pagina completă R1.3 (specificații, stoc, furnizor) |
+| **Formular Produs (R1.2)** | `catalog/forms.py` | `ProdusForm` | ModelForm cu validări de preț, stoc și livrare |
+| **Listă Admin Produse (R1.2)**| `catalog/views_admin.py` | `admin_produse_lista()` | Tabel admin cu filtre, stări activ/inactiv |
+| **Adăugare Produs (R1.2)** | `catalog/views_admin.py` | `admin_produs_adauga()` | Formular adăugare produs nou de către admin |
+| **Editare Produs (R1.2)** | `catalog/views_admin.py` | `admin_produs_editeaza()` | Actualizare preț, stoc, imagine etc. |
+| **Ștergere / Soft-Delete (R1.2)**| `catalog/views_admin.py` | `admin_produs_sterge()` | Ștergere fizică sau dezactivare dacă are comenzi |
 | **Categorii în Navbar** | `catalog/context_processors.py` | `categorii_globale()` | Încarcă automat categoriile în meniul dropdown |
 | **Șablon de bază (HTML)** | `templates/baza.html` | Schelet HTML | Meniu, Bootstrap, mesaje flash, subsol |
 | **Card Produs (reutilizabil)**| `templates/partiale/card_produs.html` | Componentă HTML | Card cu poză, preț, badge stoc și link detaliu |
@@ -35,9 +40,10 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 
 ## 2. Ghid rapid de orientare în proiect
 
-1. **Vrei să modifici afișarea unui produs în liste?** Deschide `templates/partiale/card_produs.html`.
-2. **Vrei să modifici pagina de produs individual?** Deschide `catalog/templates/catalog/detaliu_produs.html`.
-3. **Vrei să modifici căutarea sau numărul de produse pe pagină?** Deschide `catalog/views.py` la funcția `lista_produse`.
-4. **Vrei să modifici formularele de autentificare sau înregistrare?** Deschide `conturi/forms.py`.
-5. **Vrei să vezi cum este protejată o pagină de admin?** Verifică decoratorul `@doar_admin` din `conturi/decoratori.py`.
-6. **Vrei să modifici structura tabelelor sau adaugi câmpuri noi?** Deschide `catalog/models.py` sau `cumparaturi/models.py`.
+1. **Vrei să modifici panoul de administrare produse?** Deschide `catalog/views_admin.py` și șabloanele din `catalog/templates/catalog/admin/`.
+2. **Vrei să vezi logica de soft-delete a unui produs?** Verifică funcția `admin_produs_sterge` din `catalog/views_admin.py`.
+3. **Vrei să modifici formularul de adăugare/editare produs?** Deschide `catalog/forms.py`.
+4. **Vrei să modifici afișarea unui produs în liste?** Deschide `templates/partiale/card_produs.html`.
+5. **Vrei să modifici pagina de produs individual?** Deschide `catalog/templates/catalog/detaliu_produs.html`.
+6. **Vrei să modifici formularele de autentificare sau înregistrare?** Deschide `conturi/forms.py`.
+7. **Vrei să modifici structura tabelelor sau adaugi câmpuri noi?** Deschide `catalog/models.py` sau `cumparaturi/models.py`.

@@ -11,13 +11,18 @@ Teste automate pentru catalogul de produse:
 - Filtrarea după categorie (Cerința R1.4)
 - Căutarea după cuvinte cheie (Cerința R1.4)
 - Pagina de detaliu produs cu toate atributele cerute (Cerința R1.3)
+- Panoul de administrare CRUD produse (Cerința R1.2): adăugare, editare, ștergere fizică și soft-delete
 """
 
 from decimal import Decimal
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from catalog.models import Categorie, Furnizor, ModalitateLivrare, Produs
+from cumparaturi.models import ArticolComanda, Comanda
+
+User = get_user_model()
 
 
 class PaginaPrincipalaTest(TestCase):
@@ -236,13 +241,11 @@ class CatalogPublicTest(TestCase):
 
     def test_produsele_inactive_nu_apar_in_lista_sau_acasa(self):
         """Asigură că doar produsele active (activ=True) sunt afișate cumpărătorilor."""
-        # Verificare pe pagina de produse
         raspuns_lista = self.client.get(reverse('catalog:lista_produse'))
         self.assertContains(raspuns_lista, "Laptop ASUS ZenBook")
         self.assertContains(raspuns_lista, "Căști Sony Noise Cancelling")
         self.assertNotContains(raspuns_lista, "Laptop Vechi Retras")
 
-        # Verificare pe pagina Acasă
         raspuns_acasa = self.client.get(reverse('catalog:acasa'))
         self.assertContains(raspuns_acasa, "Laptop ASUS ZenBook")
         self.assertNotContains(raspuns_acasa, "Laptop Vechi Retras")
@@ -261,12 +264,10 @@ class CatalogPublicTest(TestCase):
 
     def test_cautare_produse_dupa_nume_si_descriere(self):
         """Verifică căutarea ?q= returnează produsele potrivite după nume sau descriere (R1.4)."""
-        # Căutare după nume
         raspuns_nume = self.client.get(reverse('catalog:lista_produse') + '?q=ZenBook')
         self.assertContains(raspuns_nume, "Laptop ASUS ZenBook")
         self.assertNotContains(raspuns_nume, "Căști Sony")
 
-        # Căutare după descriere
         raspuns_desc = self.client.get(reverse('catalog:lista_produse') + '?q=izolare')
         self.assertContains(raspuns_desc, "Căști Sony Noise Cancelling")
         self.assertNotContains(raspuns_desc, "Laptop ASUS ZenBook")
@@ -284,6 +285,162 @@ class CatalogPublicTest(TestCase):
         self.assertContains(raspuns, "Distrib SRL")
         self.assertContains(raspuns, "Curier Rapid")
         self.assertContains(raspuns, "Laptopuri")
-        # Specificații tabel
         self.assertContains(raspuns, "OLED 14 inch")
         self.assertContains(raspuns, "Intel i5")
+
+
+class AdminProduseCRUDTest(TestCase):
+    """Teste complete pentru panoul de administrare produse (Cerința R1.2)."""
+
+    def setUp(self):
+        """Configurează utilizatorii și datele de catalog."""
+        self.admin = User.objects.create_user(
+            username='admin_boss',
+            password='parola_admin',
+            is_staff=True
+        )
+        self.client_user = User.objects.create_user(
+            username='client_simplu',
+            password='parola_client',
+            is_staff=False
+        )
+
+        self.categorie = Categorie.objects.create(nume="Tablete", slug="tablete")
+        self.furnizor = Furnizor.objects.create(
+            nume="Furnizor Tablete SRL",
+            email="tablete@distrib.ro",
+            telefon="0711000999"
+        )
+        self.livrare = ModalitateLivrare.objects.create(
+            nume="Easybox",
+            cost=Decimal("12.00")
+        )
+
+    def test_client_neautorizat_este_redirectionat(self):
+        """Un client fără rol de admin nu poate accesa panoul de administrare produse."""
+        self.client.login(username='client_simplu', password='parola_client')
+        raspuns = self.client.get(reverse('catalog:admin_produse_lista'))
+        self.assertRedirects(raspuns, reverse('catalog:acasa'))
+
+    def test_admin_acceseaza_lista_produse(self):
+        """Un admin autentificat poate vedea tabelul de administrare produse."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        raspuns = self.client.get(reverse('catalog:admin_produse_lista'))
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertTemplateUsed(raspuns, 'catalog/admin/admin_produse_lista.html')
+
+    def test_admin_adauga_produs_cu_succes(self):
+        """Adminul poate adăuga un produs nou prin formularul POST (R1.2)."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        date_produs = {
+            'nume': 'iPad Mini 6',
+            'categorie': self.categorie.id,
+            'furnizor': self.furnizor.id,
+            'modalitati_livrare': [self.livrare.id],
+            'pret': '2899.00',
+            'stoc': 15,
+            'descriere': 'Cea mai compactă tabletă performantă.',
+            'specificatii': 'Ecran: 8.3 inch\nCip: A15 Bionic',
+            'activ': True,
+        }
+        raspuns = self.client.post(reverse('catalog:admin_produs_adauga'), date_produs)
+        self.assertRedirects(raspuns, reverse('catalog:admin_produse_lista'))
+
+        # Verificăm salvarea în baza de date
+        self.assertTrue(Produs.objects.filter(nume='iPad Mini 6').exists())
+        produs = Produs.objects.get(nume='iPad Mini 6')
+        self.assertEqual(produs.pret, Decimal('2899.00'))
+        self.assertEqual(produs.stoc, 15)
+        self.assertEqual(produs.modalitati_livrare.count(), 1)
+
+    def test_admin_editeaza_produs_cu_succes(self):
+        """Adminul poate actualiza datele unui produs existent (R1.2)."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        produs = Produs.objects.create(
+            nume='Tabletă De Modificat',
+            categorie=self.categorie,
+            furnizor=self.furnizor,
+            pret=Decimal('1000.00'),
+            stoc=5,
+            descriere='Descriere veche.'
+        )
+        produs.modalitati_livrare.add(self.livrare)
+
+        date_modificate = {
+            'nume': 'Tabletă Modificată',
+            'categorie': self.categorie.id,
+            'furnizor': self.furnizor.id,
+            'modalitati_livrare': [self.livrare.id],
+            'pret': '1199.99',
+            'stoc': 20,
+            'descriere': 'Descriere nouă și îmbunătățită.',
+            'specificatii': 'RAM: 4 GB',
+            'activ': True,
+        }
+        raspuns = self.client.post(reverse('catalog:admin_produs_editeaza', kwargs={'pk': produs.pk}), date_modificate)
+        self.assertRedirects(raspuns, reverse('catalog:admin_produse_lista'))
+
+        produs.refresh_from_db()
+        self.assertEqual(produs.nume, 'Tabletă Modificată')
+        self.assertEqual(produs.pret, Decimal('1199.99'))
+        self.assertEqual(produs.stoc, 20)
+
+    def test_stergere_definitiva_cand_nu_exista_comenzi(self):
+        """Dacă un produs nu a fost comandat, este șters definitiv din baza de date."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        produs = Produs.objects.create(
+            nume='Produs Fără Comenzi',
+            categorie=self.categorie,
+            furnizor=self.furnizor,
+            pret=Decimal('500.00'),
+            stoc=3
+        )
+        produs_id = produs.id
+
+        raspuns = self.client.post(reverse('catalog:admin_produs_sterge', kwargs={'pk': produs_id}))
+        self.assertRedirects(raspuns, reverse('catalog:admin_produse_lista'))
+        # Produsul nu mai trebuie să existe în baza de date
+        self.assertFalse(Produs.objects.filter(id=produs_id).exists())
+
+    def test_soft_delete_cand_produsul_are_comenzi(self):
+        """Dacă un produs apare în comenzi finalizate, NU se șterge fizic, ci se marchează activ=False."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        produs = Produs.objects.create(
+            nume='Produs Cu Istoric Comenzi',
+            categorie=self.categorie,
+            furnizor=self.furnizor,
+            pret=Decimal('750.00'),
+            stoc=2,
+            activ=True
+        )
+
+        # Creăm o comandă fictivă care conține acest produs
+        comanda = Comanda.objects.create(
+            utilizator=self.client_user,
+            nume_destinatar='Vasile Vasile',
+            telefon='0722111222',
+            adresa='Strada Mare 10',
+            oras='Iași',
+            judet='Iași',
+            cod_postal='700000',
+            modalitate_livrare=self.livrare,
+            cost_livrare=self.livrare.cost,
+            subtotal=Decimal('750.00'),
+            total=Decimal('762.00')
+        )
+        ArticolComanda.objects.create(
+            comanda=comanda,
+            produs=produs,
+            nume_produs=produs.nume,
+            pret_unitar=produs.pret,
+            cantitate=1
+        )
+
+        # Adminul cere ștergerea
+        raspuns = self.client.post(reverse('catalog:admin_produs_sterge', kwargs={'pk': produs.id}))
+        self.assertRedirects(raspuns, reverse('catalog:admin_produse_lista'))
+
+        # Verificăm regula de integritate: produsul încă există în DB, dar este inactiv
+        produs.refresh_from_db()
+        self.assertTrue(Produs.objects.filter(id=produs.id).exists())
+        self.assertFalse(produs.activ, "Produsul trebuia marcat activ=False (soft-delete)!")

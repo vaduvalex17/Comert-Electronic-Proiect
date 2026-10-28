@@ -1,0 +1,198 @@
+{# catalog/templates/catalog/admin/admin_produs_formular.html #}
+{# Formular de adăugare și editare produs în panoul admin (R1.2) #}
+{% extends "baza.html" %}
+
+{% block titlu %}{{ titlu }}{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalog:admin_produse_lista' %}" class="text-decoration-none">Administrare Produse</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ actiune }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+                {# Antet Card #}
+                <div class="card-header bg-primary text-white p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="badge bg-white text-primary mb-1">Panou Admin</span>
+                            <h2 class="h4 fw-bold mb-0">{{ titlu }}</h2>
+                        </div>
+                        <a href="{% url 'catalog:admin_produse_lista' %}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-arrow-left me-1"></i> Înapoi la listă
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mb-4">
+                                {% for error in form.non_field_errors %}
+                                    <div><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {# Secțiunea 1: Informații Generale #}
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle text-primary me-2"></i>1. Informații Generale (R1.3)
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="{{ form.nume.id_for_label }}" class="form-label fw-semibold">
+                                Nume Produs <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nume }}
+                            {% if form.nume.errors %}
+                                <div class="text-danger small mt-1">{{ form.nume.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.categorie.id_for_label }}" class="form-label fw-semibold">
+                                    Categorie <span class="text-danger">*</span>
+                                </label>
+                                {{ form.categorie }}
+                                {% if form.categorie.errors %}
+                                    <div class="text-danger small mt-1">{{ form.categorie.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.furnizor.id_for_label }}" class="form-label fw-semibold">
+                                    Furnizor <span class="text-danger">*</span>
+                                </label>
+                                {{ form.furnizor }}
+                                {% if form.furnizor.errors %}
+                                    <div class="text-danger small mt-1">{{ form.furnizor.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.pret.id_for_label }}" class="form-label fw-semibold">
+                                    Preț unitar (lei) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.pret }}
+                                {% if form.pret.errors %}
+                                    <div class="text-danger small mt-1">{{ form.pret.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">Preț cu două zecimale, mai mare de 0.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.stoc.id_for_label }}" class="form-label fw-semibold">
+                                    Stoc disponibil (bucăți) <span class="text-danger">*</span>
+                                </label>
+                                {{ form.stoc }}
+                                {% if form.stoc.errors %}
+                                    <div class="text-danger small mt-1">{{ form.stoc.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">Număr întreg pozitiv sau 0 (epuizat).</div>
+                            </div>
+                        </div>
+
+                        {# Secțiunea 2: Descriere și Specificații #}
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-file-text text-primary me-2"></i>2. Conținut & Specificații Tehnice
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descriere.id_for_label }}" class="form-label fw-semibold">
+                                Descriere Produs <span class="text-danger">*</span>
+                            </label>
+                            {{ form.descriere }}
+                            {% if form.descriere.errors %}
+                                <div class="text-danger small mt-1">{{ form.descriere.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.specificatii.id_for_label }}" class="form-label fw-semibold">
+                                Specificații Tehnice (format <code>Cheie: Valoare</code>)
+                            </label>
+                            {{ form.specificatii }}
+                            {% if form.specificatii.errors %}
+                                <div class="text-danger small mt-1">{{ form.specificatii.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted small">
+                                Introdu fiecare specificație pe un rând nou, de exemplu:
+                                <br><code>Procesor: Intel Core i7</code><br><code>RAM: 16 GB DDR5</code>
+                            </div>
+                        </div>
+
+                        {# Secțiunea 3: Modalități de Livrare și Stare #}
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-truck text-primary me-2"></i>3. Opțiuni de Livrare & Vizibilitate
+                        </h5>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold d-block">
+                                Modalități de livrare compatibile <span class="text-danger">*</span>
+                            </label>
+                            <div class="p-3 bg-light rounded-3 border">
+                                {% for checkbox in form.modalitati_livrare %}
+                                    <div class="form-check mb-2">
+                                        {{ checkbox.tag }}
+                                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                            {{ checkbox.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.modalitati_livrare.errors %}
+                                <div class="text-danger small mt-1">{{ form.modalitati_livrare.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.imagine.id_for_label }}" class="form-label fw-semibold">
+                                Fotografie Produs (opțional)
+                            </label>
+                            {% if produs and produs.imagine %}
+                                <div class="d-flex align-items-center gap-3 mb-2 p-2 border rounded bg-light">
+                                    <img src="{{ produs.imagine.url }}" class="rounded object-fit-contain" width="60" height="60" alt="Poză curentă">
+                                    <small class="text-muted">Poză actuală: {{ produs.imagine.name }}</small>
+                                </div>
+                            {% endif %}
+                            {{ form.imagine }}
+                            {% if form.imagine.errors %}
+                                <div class="text-danger small mt-1">{{ form.imagine.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 border mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.activ }}
+                                <label class="form-check-label fw-semibold" for="{{ form.activ.id_for_label }}">
+                                    Produs activ (vizibil imediat clienților în catalog)
+                                </label>
+                            </div>
+                        </div>
+
+                        {# Butoane Salvare #}
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{% url 'catalog:admin_produse_lista' %}" class="btn btn-outline-secondary px-4">
+                                Anulează
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i> {{ actiune }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

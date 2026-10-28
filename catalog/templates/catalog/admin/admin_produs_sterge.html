@@ -1,0 +1,85 @@
+{# catalog/templates/catalog/admin/admin_produs_sterge.html #}
+{# Pagina de confirmare pentru ștergerea sau dezactivarea unui produs (soft-delete) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Confirmare Ștergere Produs{% endblock %}
+
+{% block continut %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                {# Header alert #}
+                <div class="card-header {% if are_comenzi %}bg-warning text-dark{% else %}bg-danger text-white{% endif %} p-4 text-center">
+                    <div class="fs-1 mb-2">
+                        {% if are_comenzi %}
+                            <i class="bi bi-shield-exclamation"></i>
+                        {% else %}
+                            <i class="bi bi-trash3-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="h4 fw-bold mb-0">Confirmare acțiune ștergere</h3>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    {# Explicația regulii de business (pentru coleg și profesor) #}
+                    {% if are_comenzi %}
+                        <div class="alert alert-warning mb-4 shadow-sm" role="alert">
+                            <h6 class="alert-heading fw-bold">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Protecție comenzi (Soft-Delete)
+                            </h6>
+                            <p class="small mb-0">
+                                Produsul selectat <strong>apare în comenzi plasate anterior</strong> de clienți.
+                                Pentru a nu distruge istoricul cumpărăturilor, produsul <strong>NU va fi șters definitiv</strong> din baza de date, ci va fi <strong>marcat ca inactiv</strong> (ascuns din magazin).
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger mb-4 shadow-sm" role="alert">
+                            <h6 class="alert-heading fw-bold">
+                                <i class="bi bi-info-circle-fill me-1"></i> Ștergere definitivă (Hard-Delete)
+                            </h6>
+                            <p class="small mb-0">
+                                Produsul nu a fost comandat încă de niciun client. Confirmarea va <strong>șterge definitiv</strong> înregistrarea din baza de date.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    {# Detalii produs supus ștergerii #}
+                    <div class="card bg-light border-0 mb-4 p-3 rounded-3">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if produs.imagine %}
+                                <img src="{{ produs.imagine.url }}" class="rounded border object-fit-contain bg-white" width="64" height="64" alt="{{ produs.nume }}">
+                            {% endif %}
+                            <div>
+                                <h5 class="h6 fw-bold mb-1">{{ produs.nume }}</h5>
+                                <div class="text-muted small">
+                                    Categorie: <span class="fw-semibold">{{ produs.categorie.nume }}</span> |
+                                    Preț: <span class="fw-semibold text-primary">{{ produs.pret }} lei</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <a href="{% url 'catalog:admin_produse_lista' %}" class="btn btn-outline-secondary px-4">
+                                Anulează
+                            </a>
+                            {% if are_comenzi %}
+                                <button type="submit" class="btn btn-warning px-4 fw-semibold text-dark">
+                                    <i class="bi bi-eye-slash me-1"></i> Dezactivează produsul (Soft-delete)
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-danger px-4 fw-semibold">
+                                    <i class="bi bi-trash me-1"></i> Șterge definitiv produsul
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
