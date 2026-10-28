@@ -1,0 +1,27 @@
+# Mediu virtual Python
+venv/
+.venv/
+env/
+
+# Baza de date SQLite
+*.sqlite3
+db.sqlite3
+
+# Fișiere încărcate de utilizatori
+media/
+
+# Fișiere Python compilate și cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Fișiere temporare de lock (LibreOffice / editori)
+.~lock*
+*~
+
+# Configurări editori / IDE
+.vscode/
+.idea/
+.DS_Store

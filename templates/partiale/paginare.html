@@ -1,0 +1,34 @@
+{# templates/partiale/paginare.html #}
+{# Șablon parțial pentru controalele de navigare între pagini #}
+{# Primește ca variabilă: 'page_obj' (obiectul Page din Django Paginator) #}
+{% if page_obj.has_other_pages %}
+<nav aria-label="Navigare pagini" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?pagina={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo; Anterior</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?pagina={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?pagina={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Următor &raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Următor &raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

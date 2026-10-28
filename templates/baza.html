@@ -1,0 +1,201 @@
+{# templates/baza.html #}
+{# Șablonul de bază al aplicației: conține bara de navigare, zona pentru mesaje, #}
+{# containerul principal de conținut și subsolul comun pe toate paginile. #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titlu %}Magazin Online{% endblock %} — Comerț Electronic</title>
+
+    {# 1. Bootstrap 5.3.3 CSS (CDN cu versiune fixată pentru stabilitate) #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+    {# 2. Bootstrap Icons (pentru iconițe: coș, inimă, căutare, utilizator) #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    {# 3. Stiluri CSS proprii (pentru mici retușuri de design peste Bootstrap) #}
+    <link rel="stylesheet" href="{% static 'css/stil.css' %}">
+
+    {% block stiluri_suplimentare %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    {# Secțiunea 1: Bara de navigare superioară (Meniul site-ului) #}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
+        <div class="container">
+            {# Logo și nume magazin #}
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="{% url 'catalog:acasa' %}">
+                <i class="bi bi-shop fs-4"></i>
+                <span>ElectroMag</span>
+            </a>
+
+            {# Buton mobil (hamburger) pentru ecrane mici #}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#meniuPrincipal" aria-controls="meniuPrincipal" aria-expanded="false" aria-label="Comută navigarea">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="meniuPrincipal">
+                {# Link-uri de navigare generală #}
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'catalog:acasa' %}">
+                            <i class="bi bi-house-door me-1"></i>Acasă
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-grid me-1"></i>Produse
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-tags me-1"></i>Categorii
+                        </a>
+                        <ul class="dropdown-menu shadow" aria-labelledby="categoriiDropdown">
+                            <li><span class="dropdown-header">Alege o categorie</span></li>
+                            <li><a class="dropdown-item" href="#">Toate categoriile</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                {# Formular de căutare rapidă #}
+                <form class="d-flex me-lg-3 my-2 my-lg-0" role="search" method="get" action="#">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q" placeholder="Caută un produs..." aria-label="Căutare">
+                        <button class="btn btn-light text-primary" type="submit" title="Caută">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+                {# Meniul utilizatorului (diferit pentru oaspeți, clienți și admin) #}
+                <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center">
+                    {% if user.is_authenticated %}
+                        {# Link-uri pentru cumpărători #}
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="#" title="Lista de favorite">
+                                <i class="bi bi-heart me-1"></i>Favorite
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link position-relative me-lg-2" href="#" title="Coșul de cumpărături">
+                                <i class="bi bi-cart3 me-1"></i>Coș
+                                <span class="badge bg-danger rounded-pill">0</span>
+                            </a>
+                        </li>
+
+                        {# Meniu utilizator autentificat #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" id="contDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-5"></i>
+                                <span>{{ user.username }}</span>
+                                {% if user.is_staff %}
+                                    <span class="badge bg-warning text-dark ms-1">Admin</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="contDropdown">
+                                <li>
+                                    <h6 class="dropdown-header">Contul meu</h6>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-bag-check me-2"></i>Comenzile mele
+                                    </a>
+                                </li>
+                                {% if user.is_staff %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <h6 class="dropdown-header text-uppercase text-danger fw-bold">Panou Admin</h6>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="bi bi-boxes me-2"></i>Administrare Produse
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/admin/" target="_blank">
+                                            <i class="bi bi-shield-lock me-2"></i>Django Admin
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="#" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Deconectare
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        {# Link-uri pentru vizitatori neautentificați #}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Autentificare
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm ms-lg-2" href="#">
+                                <i class="bi bi-person-plus me-1"></i>Înregistrare
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {# Secțiunea 2: Notificări și mesaje flash din Django (succes, eroare, info) #}
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                    {% elif message.tags == 'danger' or message.tags == 'error' %}
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Închide"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    {# Secțiunea 3: Conținutul principal al fiecărei pagini #}
+    <main class="flex-grow-1 py-4">
+        {% block continut %}
+        {% endblock %}
+    </main>
+
+    {# Secțiunea 4: Subsolul comun al site-ului (Footer) #}
+    <footer class="bg-white text-muted py-4 mt-auto border-top">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+                    <p class="mb-0 fw-semibold text-dark">
+                        <i class="bi bi-shop text-primary me-1"></i>ElectroMag — Proiect Comerț Electronic
+                    </p>
+                    <small class="text-secondary">Aplicație Web MVC (Django 5 + SQLite + Bootstrap 5)</small>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <span class="badge bg-light text-dark border me-2">Tema II (Individual)</span>
+                    <span class="badge bg-primary text-white">2026</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {# Script JavaScript Bootstrap 5.3.3 cu Popper inclus (CDN) #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripturi %}{% endblock %}
+</body>
+</html>

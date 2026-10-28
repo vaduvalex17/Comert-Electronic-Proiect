@@ -1,0 +1,39 @@
+/* static/css/stil.css */
+/* Stiluri personalizate pentru Magazinul Online ElectroMag */
+
+:root {
+    --primary-color: #0d6efd;
+    --primary-dark: #0a58ca;
+    --accent-bg: #f8f9fa;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+}
+
+/* Carduri de produs cu efect subtil de ridicare la hover */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Badge-uri stilizate */
+.badge {
+    letter-spacing: 0.3px;
+}
+
+/* Stilizare pentru imaginile produselor din carusel sau liste */
+.produs-thumbnail {
+    object-fit: contain;
+    background-color: #ffffff;
+}
+
+/* Butoane de acțiune cu cursor pointer */
+button, a.btn {
+    cursor: pointer;
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#f1f3f5" />
+  <g fill="#adb5bd">
+    <rect x="140" y="90" width="120" height="90" rx="8" fill="none" stroke="#adb5bd" stroke-width="4"/>
+    <circle cx="170" cy="120" r="10" />
+    <path d="M145 170 L180 135 L210 165 L230 145 L255 170 Z" />
+    <text x="200" y="220" font-family="system-ui, sans-serif" font-size="16" text-anchor="middle">Fără imagine</text>
+  </g>
+</svg>

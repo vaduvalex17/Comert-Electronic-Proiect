@@ -1,0 +1,72 @@
+{# catalog/templates/catalog/acasa.html #}
+{# Pagina principală a magazinului (Acasă) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Acasă{% endblock %}
+
+{% block continut %}
+<div class="container">
+    {# Banner introductiv #}
+    <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
+        <div class="container-fluid py-4">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-semibold">
+                <i class="bi bi-stars me-1"></i> Comerț Electronic — Tema II
+            </span>
+            <h1 class="display-5 fw-bold text-dark">{{ titlu }}</h1>
+            <p class="col-md-9 fs-5 text-muted my-4">
+                {{ mesaj_bun_venit }}
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/admin/" class="btn btn-outline-primary btn-lg px-4" target="_blank">
+                    <i class="bi bi-shield-lock me-1"></i> Panou Admin
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# Prezentare pe scurt a arhitecturii pentru colegul non-tehnic #}
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <div class="text-primary fs-1 mb-3">
+                        <i class="bi bi-database-check"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Model (Datele)</h5>
+                    <p class="card-text text-muted">
+                        Structura bazei de date (produse, comenzi, utilizatori) este gestionată direct prin ORM-ul Django în <code>SQLite</code>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <div class="text-primary fs-1 mb-3">
+                        <i class="bi bi-layout-text-window-reverse"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">View (Interfața)</h5>
+                    <p class="card-text text-muted">
+                        Șabloane HTML simple și elegante cu <code>Bootstrap 5</code>, fără pași complicați de compilare sau Node.js.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <div class="text-primary fs-1 mb-3">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">Controller (Logica)</h5>
+                    <p class="card-text text-muted">
+                        Funcții Python explicite (Function-Based Views), unde fiecare pas este comentat în detaliu în limba română.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

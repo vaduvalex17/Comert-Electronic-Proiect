@@ -1,0 +1,4 @@
+# Dependențe fixe pentru proiectul Magazin Online (Comerț Electronic)
+# Doar Django și Pillow sunt necesare conform cerințelor de arhitectură (§2).
+Django>=5.1,<5.3
+Pillow>=10.2.0
