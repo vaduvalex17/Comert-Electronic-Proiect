@@ -31,6 +31,10 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Tranzacție Comandă (R2.2)** | `cumparaturi/servicii.py` | `plaseaza_comanda()` | Tranzacție atomică, verificare stoc și snapshot |
 | **Checkout View (R2.2)** | `cumparaturi/views.py` | `finalizare_comanda()` | Preluare date livrare și plată simulată |
 | **Confirmare Comandă (R2.2)**| `cumparaturi/views.py` | `confirmare_comanda()` | Pagina de succes cu detaliile comenzii plasate |
+| **Istoric Comenzi (R2.3)** | `cumparaturi/views.py` | `istoric_comenzi()` | Lista comenzilor clientului cu paginare |
+| **Detaliu Comandă / Factură (R2.3)**| `cumparaturi/views.py` | `detaliu_comanda()` | Vizualizare factură comandă, protecție IDOR (404) |
+| **Gestiune Comenzi Admin (R2.3)**| `cumparaturi/views.py` | `admin_comenzi_lista()` | Vizualizare comenzi globale și filtru după status |
+| **Actualizare Status Comandă**| `cumparaturi/views.py` | `admin_comanda_status()` | Modificare status comandă de către administrator |
 | **Contoare Coș & Favorite** | `cumparaturi/context_processors.py` | `cumparaturi_meniu()` | Calculează insignele numerice din meniul de sus |
 | **Categorii în Navbar** | `catalog/context_processors.py` | `categorii_globale()` | Încarcă automat categoriile în meniul dropdown |
 | **Șablon de bază (HTML)** | `templates/baza.html` | Schelet HTML | Meniu, Bootstrap, mesaje flash, subsol |

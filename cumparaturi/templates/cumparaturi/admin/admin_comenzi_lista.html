@@ -1,0 +1,138 @@
+{# cumparaturi/templates/cumparaturi/admin/admin_comenzi_lista.html #}
+{# Panou de gestiune a tuturor comenzilor pentru administratori (Cerința R2.3 / Demo) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Panou Administrare — Comenzi Clienți{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Antet Panou Admin #}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger text-white px-2 py-1">ADMINISTRATOR</span>
+                <h1 class="h3 fw-bold mb-0">Gestiune Comenzi Clienți</h1>
+            </div>
+            <p class="text-muted small mb-0">
+                Vizualizează comenzile înregistrate în magazin și actualizează statusul operațional al livrărilor. Total comenzi: {{ total_comenzi }}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'catalog:admin_produse_lista' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-boxes me-1"></i> Mergi la Gestiune Produse
+            </a>
+        </div>
+    </div>
+
+    {# Bara de Filtrare după Status #}
+    <div class="card border-0 shadow-sm mb-4 bg-white">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="fw-semibold text-muted small">
+                    <i class="bi bi-funnel me-1"></i>Filtrează după status:
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'cumparaturi:admin_comenzi_lista' %}" class="btn btn-sm {% if not status_selectat %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        Toate ({{ total_comenzi }})
+                    </a>
+                    {% for cod_status, eticheta_status in status_alegeri %}
+                        <a href="?status={{ cod_status }}" class="btn btn-sm {% if status_selectat == cod_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                            {{ eticheta_status }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if comenzi %}
+        {# Tabelul comenzilor #}
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 90px;">Comandă</th>
+                            <th>Data</th>
+                            <th>Utilizator & Destinatar</th>
+                            <th>Oraș & Contact</th>
+                            <th>Metodă Livrare</th>
+                            <th class="text-end">Total</th>
+                            <th style="min-width: 220px;">Actualizare Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cmd in comenzi %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-primary">#{{ cmd.id }}</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ cmd.creata_la|date:"d.m.Y" }}</div>
+                                    <div class="text-muted small">{{ cmd.creata_la|date:"H:i" }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ cmd.nume_destinatar }}</div>
+                                    <div class="text-muted small">
+                                        <i class="bi bi-person me-1"></i>{{ cmd.utilizator.username }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>{{ cmd.oras }}, {{ cmd.judet }}</div>
+                                    <div class="text-muted small">
+                                        <i class="bi bi-telephone me-1"></i>{{ cmd.telefon }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-secondary border">
+                                        {{ cmd.modalitate_livrare.nume }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-bold text-dark">{{ cmd.total }} lei</span>
+                                    <div class="text-muted small">Card **** {{ cmd.card_ultimele4 }}</div>
+                                </td>
+                                <td>
+                                    {# Formular inline pentru schimbarea statusului #}
+                                    <form method="post" action="{% url 'cumparaturi:admin_comanda_status' cmd.id %}" class="d-flex align-items-center gap-2">
+                                        {% csrf_token %}
+                                        <select name="status" class="form-select form-select-sm" style="min-width: 140px;" aria-label="Schimbă statusul comenzii">
+                                            {% for cod, nume in status_alegeri %}
+                                                <option value="{{ cod }}" {% if cmd.status == cod %}selected{% endif %}>
+                                                    {{ nume }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Salvează status">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# Paginare #}
+        {% include "partiale/paginare.html" %}
+
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white my-4">
+            <div class="mb-3">
+                <i class="bi bi-inbox text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h2 class="h5 fw-bold text-dark mb-1">Nicio comandă găsită</h2>
+            <p class="text-muted small mb-0">
+                {% if status_selectat %}
+                    Nu există comenzi cu statusul selectat.
+                    <a href="{% url 'cumparaturi:admin_comenzi_lista' %}" class="d-block mt-2">Vezi toate comenzile</a>
+                {% else %}
+                    Niciun utilizator nu a plasat încă o comandă în magazin.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

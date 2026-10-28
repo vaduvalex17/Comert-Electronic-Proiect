@@ -115,7 +115,7 @@
                                     <h6 class="dropdown-header">Contul meu</h6>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">
+                                    <a class="dropdown-item" href="{% url 'cumparaturi:istoric_comenzi' %}">
                                         <i class="bi bi-bag-check me-2"></i>Comenzile mele
                                     </a>
                                 </li>
@@ -127,6 +127,11 @@
                                     <li>
                                         <a class="dropdown-item" href="{% url 'catalog:admin_produse_lista' %}">
                                             <i class="bi bi-boxes me-2"></i>Administrare Produse
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'cumparaturi:admin_comenzi_lista' %}">
+                                            <i class="bi bi-receipt me-2"></i>Administrare Comenzi
                                         </a>
                                     </li>
                                     <li>

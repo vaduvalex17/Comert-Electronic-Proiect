@@ -6,6 +6,8 @@ Maparea adreselor URL pentru cumpărături:
 - Coș de cumpărături (/cos/ - R2.2)
 - Finalizare comandă / Checkout (/comanda/finalizare/ - R2.2)
 - Confirmare comandă (/comanda/<id>/confirmare/ - R2.2)
+- Istoric comenzi (/comenzi/ și /comenzi/<id>/ - R2.3)
+- Gestiune comenzi pentru administratori (/administrare/comenzi/)
 """
 
 from django.urls import path
@@ -35,4 +37,16 @@ urlpatterns = [
     # -------------------------------------------------------------
     path('comanda/finalizare/', views.finalizare_comanda, name='finalizare_comanda'),
     path('comanda/<int:comanda_id>/confirmare/', views.confirmare_comanda, name='confirmare_comanda'),
+
+    # -------------------------------------------------------------
+    # 4. Istoric Comenzi (Cerința R2.3)
+    # -------------------------------------------------------------
+    path('comenzi/', views.istoric_comenzi, name='istoric_comenzi'),
+    path('comenzi/<int:comanda_id>/', views.detaliu_comanda, name='detaliu_comanda'),
+
+    # -------------------------------------------------------------
+    # 5. Administrare Comenzi (Panou Admin)
+    # -------------------------------------------------------------
+    path('administrare/comenzi/', views.admin_comenzi_lista, name='admin_comenzi_lista'),
+    path('administrare/comenzi/<int:comanda_id>/status/', views.admin_comanda_status, name='admin_comanda_status'),
 ]

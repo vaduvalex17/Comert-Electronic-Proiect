@@ -1,0 +1,125 @@
+{# cumparaturi/templates/cumparaturi/istoric_comenzi.html #}
+{# Lista comenzilor plasate de utilizatorul curent (Cerința R2.3) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Istoricul Comenzilor Mele{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Comenzile mele</li>
+        </ol>
+    </nav>
+
+    {# Antet pagină #}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-clock-history text-primary me-2"></i>Istoricul Comenzilor Mele
+            </h1>
+            <p class="text-muted small mb-0">
+                Aici poți consulta toate comenzile plasate, starea lor de livrare și detaliile facturilor (Cerința R2.3).
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
+                Total comenzi: <strong>{{ total_comenzi }}</strong>
+            </span>
+        </div>
+    </div>
+
+    {% if comenzi %}
+        {# Tabelul comenzilor #}
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 110px;">Comandă</th>
+                            <th>Data plasării</th>
+                            <th>Destinatar & Locație</th>
+                            <th>Metodă Livrare</th>
+                            <th class="text-center">Articole</th>
+                            <th class="text-end">Total Achitat</th>
+                            <th class="text-center">Stare</th>
+                            <th class="text-end" style="width: 140px;">Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cmd in comenzi %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-primary">#{{ cmd.id }}</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ cmd.creata_la|date:"d.m.Y" }}</div>
+                                    <div class="text-muted small">{{ cmd.creata_la|date:"H:i" }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ cmd.nume_destinatar }}</div>
+                                    <div class="text-muted small">{{ cmd.oras }}, {{ cmd.judet }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-secondary border">
+                                        <i class="bi bi-truck me-1"></i>{{ cmd.modalitate_livrare.nume }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-dark border">
+                                        {{ cmd.articole.count }} prod.
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-bold fs-6 text-dark">{{ cmd.total }} lei</span>
+                                    <div class="text-muted small">Card **** {{ cmd.card_ultimele4 }}</div>
+                                </td>
+                                <td class="text-center">
+                                    {% if cmd.status == 'plasata' %}
+                                        <span class="badge bg-info text-dark px-2 py-1">Plasată</span>
+                                    {% elif cmd.status == 'in_procesare' %}
+                                        <span class="badge bg-warning text-dark px-2 py-1">În procesare</span>
+                                    {% elif cmd.status == 'livrata' %}
+                                        <span class="badge bg-success px-2 py-1">Livrată</span>
+                                    {% elif cmd.status == 'anulata' %}
+                                        <span class="badge bg-danger px-2 py-1">Anulată</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1">{{ cmd.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'cumparaturi:detaliu_comanda' cmd.id %}" class="btn btn-sm btn-outline-primary fw-semibold">
+                                        <i class="bi bi-eye me-1"></i> Detalii
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# Paginare #}
+        {% include "partiale/paginare.html" %}
+
+    {% else %}
+        {# Empty State dacă nu există comenzi #}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white my-4">
+            <div class="mb-3">
+                <i class="bi bi-bag-x text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h2 class="h4 fw-bold text-dark mb-2">Nu ai plasat nicio comandă încă</h2>
+            <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+                Descoperă produsele noastre premium de gaming și componente hardware, adaugă-le în coș și bucură-te de o experiență rapidă de comandă.
+            </p>
+            <div>
+                <a href="{% url 'catalog:lista_produse' %}" class="btn btn-primary px-4 py-2 fw-semibold">
+                    <i class="bi bi-shop me-2"></i>Explorează Catalogul
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

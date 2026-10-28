@@ -463,3 +463,141 @@ class FinalizareComandaTest(TestCase):
         self.assertEqual(raspuns.status_code, 200)
         self.assertContains(raspuns, "Cardul bancar este expirat")
         self.assertEqual(Comanda.objects.count(), 0)
+
+
+class IstoricSiAdministrareComenziTest(TestCase):
+    """Teste pentru istoricul comenzilor (R2.3) și panoul de gestiune a comenzilor pentru admin."""
+
+    def setUp(self):
+        """Creează doi clienți și un administrator cu comenzi dedicate fiecăruia."""
+        self.client_1 = User.objects.create_user(username='client1', password='parola123')
+        self.client_2 = User.objects.create_user(username='client2', password='parola123')
+        self.admin_user = User.objects.create_user(
+            username='admin_boss',
+            password='parola_admin',
+            is_staff=True
+        )
+
+        self.cat = Categorie.objects.create(nume='Monitoare')
+        self.furnizor = Furnizor.objects.create(nume='Tech Supplier', email='t@sup.ro', telefon='0711222333')
+        self.livrare = ModalitateLivrare.objects.create(nume='Curier Prioritar', cost=Decimal('20.00'))
+
+        self.produs = Produs.objects.create(
+            nume='Monitor Gaming 144Hz',
+            categorie=self.cat,
+            furnizor=self.furnizor,
+            pret=Decimal('1200.00'),
+            stoc=10
+        )
+
+        # Comanda pentru client 1
+        self.comanda_1 = Comanda.objects.create(
+            utilizator=self.client_1,
+            modalitate_livrare=self.livrare,
+            nume_destinatar='Client Unu',
+            telefon='0711111111',
+            adresa='Strada Unu nr. 1',
+            oras='București',
+            judet='București',
+            cod_postal='010101',
+            cost_livrare=self.livrare.cost,
+            total=Decimal('1220.00'),
+            card_ultimele4='4242',
+            status='plasata'
+        )
+        ArticolComanda.objects.create(
+            comanda=self.comanda_1,
+            produs=self.produs,
+            nume_produs=self.produs.nume,
+            pret_unitar=self.produs.pret,
+            cantitate=1
+        )
+
+        # Comanda pentru client 2
+        self.comanda_2 = Comanda.objects.create(
+            utilizator=self.client_2,
+            modalitate_livrare=self.livrare,
+            nume_destinatar='Client Doi',
+            telefon='0722222222',
+            adresa='Strada Doi nr. 2',
+            oras='Cluj-Napoca',
+            judet='Cluj',
+            cod_postal='400100',
+            cost_livrare=self.livrare.cost,
+            total=Decimal('2420.00'),
+            card_ultimele4='9999',
+            status='in_procesare'
+        )
+        ArticolComanda.objects.create(
+            comanda=self.comanda_2,
+            produs=self.produs,
+            nume_produs=self.produs.nume,
+            pret_unitar=self.produs.pret,
+            cantitate=2
+        )
+
+    def test_client_vede_doar_propriile_comenzi_in_istoric(self):
+        """Un client vede pe /comenzi/ doar comenzile plasate din contul său (R2.3)."""
+        self.client.login(username='client1', password='parola123')
+        raspuns = self.client.get(reverse('cumparaturi:istoric_comenzi'))
+
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertContains(raspuns, f"#{self.comanda_1.id}")
+        self.assertContains(raspuns, "Client Unu")
+        # Nu trebuie să vadă comanda clientului 2
+        self.assertNotContains(raspuns, f"#{self.comanda_2.id}")
+        self.assertNotContains(raspuns, "Client Doi")
+
+    def test_client_poate_vedea_detaliul_propriei_comenzi(self):
+        """Un client poate accesa factura propriei comenzi."""
+        self.client.login(username='client1', password='parola123')
+        raspuns = self.client.get(reverse('cumparaturi:detaliu_comanda', kwargs={'comanda_id': self.comanda_1.id}))
+
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertContains(raspuns, f"Comanda #{self.comanda_1.id}")
+        self.assertContains(raspuns, "Monitor Gaming 144Hz")
+        self.assertContains(raspuns, "Card **** 4242")
+        self.assertContains(raspuns, "Strada Unu nr. 1")
+
+    def test_securitate_idor_client_nu_poate_vedea_comanda_altui_utilizator(self):
+        """Securitate critică §6.2: accesul la o comandă străină prin ID în URL returnează strict 404 Not Found."""
+        self.client.login(username='client1', password='parola123')
+        raspuns = self.client.get(reverse('cumparaturi:detaliu_comanda', kwargs={'comanda_id': self.comanda_2.id}))
+
+        self.assertEqual(raspuns.status_code, 404)
+
+    def test_utilizator_neautentificat_redirectionat_la_login(self):
+        """Un vizitator anonim este redirecționat la formularul de conectare."""
+        raspuns = self.client.get(reverse('cumparaturi:istoric_comenzi'))
+        self.assertEqual(raspuns.status_code, 302)
+        self.assertIn(reverse('conturi:login'), raspuns.url)
+
+    def test_non_staff_nu_poate_accesa_administrare_comenzi(self):
+        """Un client normal fără drepturi staff este blocat la accesarea panoului admin de comenzi."""
+        self.client.login(username='client1', password='parola123')
+        raspuns = self.client.get(reverse('cumparaturi:admin_comenzi_lista'))
+        self.assertEqual(raspuns.status_code, 302)
+        self.assertRedirects(raspuns, reverse('catalog:acasa'))
+
+    def test_admin_vede_toate_comenzile_in_panou(self):
+        """Administratorul are acces la lista globală a comenzilor tuturor clienților."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        raspuns = self.client.get(reverse('cumparaturi:admin_comenzi_lista'))
+
+        self.assertEqual(raspuns.status_code, 200)
+        self.assertContains(raspuns, f"#{self.comanda_1.id}")
+        self.assertContains(raspuns, f"#{self.comanda_2.id}")
+        self.assertContains(raspuns, "Client Unu")
+        self.assertContains(raspuns, "Client Doi")
+
+    def test_admin_poate_schimba_statusul_comenzii(self):
+        """Administratorul poate trimite un formular POST pentru actualizarea stadiului comenzii."""
+        self.client.login(username='admin_boss', password='parola_admin')
+        url_status = reverse('cumparaturi:admin_comanda_status', kwargs={'comanda_id': self.comanda_1.id})
+
+        raspuns = self.client.post(url_status, {'status': 'livrata'})
+        self.assertRedirects(raspuns, reverse('cumparaturi:admin_comenzi_lista'))
+
+        self.comanda_1.refresh_from_db()
+        self.assertEqual(self.comanda_1.status, 'livrata')
+

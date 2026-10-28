@@ -6,13 +6,19 @@ Controllere (views) pentru întregul flux de cumpărături:
 2. Coș de cumpărături (R2.2): vizualizare, adăugare, actualizare cantitate, ștergere
 3. Finalizare comandă (R2.2): checkout, validare adresă și card, tranzacție atomică prin servicii.py
 4. Confirmare comandă (R2.2): sumarul final după plasarea cu succes a achiziției
+5. Istoric comenzi (R2.3):
+   - istoric_comenzi: lista comenzilor proprii ale clientului
+   - detaliu_comanda: detaliul complet al unei comenzi (cu protecție 404 pentru comenzile altora)
+   - admin_comenzi_lista: panou admin pentru vizualizarea tuturor comenzilor și schimbarea statusului
 """
 
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from catalog.models import ModalitateLivrare, Produs
+from conturi.decoratori import doar_admin
 from .forms import FinalizareComandaForm
 from .models import ArticolCos, Comanda, Favorit
 from .servicii import StocInsuficient, plaseaza_comanda
@@ -256,12 +262,7 @@ def elimina_din_cos(request, articol_id):
 
 @login_required
 def finalizare_comanda(request):
-    """Formularul de checkout pentru plasarea comenzii (Cerința R2.2).
-
-    Colectează datele de livrare, metoda de transport și detaliile de plată simulate.
-    Apelează logica tranzacțională din servicii.py.
-    """
-    # Pasul 1: Preluăm articolele din coș; dacă este gol, redirecționăm
+    """Formularul de checkout pentru plasarea comenzii (Cerința R2.2)."""
     articole = list(
         ArticolCos.objects.filter(utilizator=request.user).select_related('produs')
     )
@@ -269,7 +270,6 @@ def finalizare_comanda(request):
         messages.warning(request, "Coșul tău este gol. Adaugă cel puțin un produs înainte de a finaliza o comandă.")
         return redirect('cumparaturi:vizualizare_cos')
 
-    # Pasul 2: Calculăm modalitățile de livrare comune
     qs_livrari = ModalitateLivrare.objects.all()
     for art in articole:
         qs_livrari = qs_livrari.filter(produse=art.produs)
@@ -285,12 +285,10 @@ def finalizare_comanda(request):
 
     subtotal = sum(art.subtotal for art in articole)
 
-    # Pasul 3: Procesăm trimiterea formularului prin POST
     if request.method == 'POST':
         formular = FinalizareComandaForm(livrari_comune, request.POST)
         if formular.is_valid():
             try:
-                # Apelăm serviciul atomic de plasare a comenzii
                 comanda = plaseaza_comanda(
                     utilizator=request.user,
                     date_livrare=formular.cleaned_data,
@@ -307,7 +305,6 @@ def finalizare_comanda(request):
         else:
             messages.error(request, "Formularul conține erori. Te rugăm să verifici datele introduse.")
     else:
-        # Pasul 4: Completăm valori inițiale prietenoase la încărcarea paginii GET
         nume_implicit = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
         livrare_initiala_id = request.session.get('livrare_id')
         livrare_initiala = None
@@ -336,7 +333,6 @@ def finalizare_comanda(request):
 @login_required
 def confirmare_comanda(request, comanda_id):
     """Afișează pagina de confirmare („Mulțumim pentru comandă”) pentru o comandă plasată (R2.2)."""
-    # Pasul 1: Preluăm comanda, asigurându-ne că aparține clientului logat
     comanda = get_object_or_404(
         Comanda.objects.prefetch_related('articole'),
         id=comanda_id,
@@ -349,3 +345,95 @@ def confirmare_comanda(request, comanda_id):
         'titlu': f"Confirmare Comandă #{comanda.id}",
     }
     return render(request, 'cumparaturi/confirmare.html', context)
+
+
+# =====================================================================
+# SECȚIUNEA 4: ISTORIC COMENZI & ADMINISTRARE COMENZI (R2.3)
+# =====================================================================
+
+@login_required
+def istoric_comenzi(request):
+    """Afișează lista comenzilor plasate de utilizatorul autentificat (Cerința R2.3)."""
+    # Pasul 1: Clientul își vede STRICT comenzile proprii
+    comenzi_qs = Comanda.objects.filter(
+        utilizator=request.user
+    ).prefetch_related('articole').order_by('-creata_la')
+
+    # Pasul 2: Paginăm lista (10 comenzi pe pagină)
+    paginator = Paginator(comenzi_qs, 10)
+    numar_pagina = request.GET.get('pagina', 1)
+    page_obj = paginator.get_page(numar_pagina)
+
+    context = {
+        'page_obj': page_obj,
+        'comenzi': page_obj.object_list,
+        'total_comenzi': paginator.count,
+        'titlu': 'Istoricul Comenzilor Mele',
+    }
+    return render(request, 'cumparaturi/istoric_comenzi.html', context)
+
+
+@login_required
+def detaliu_comanda(request, comanda_id):
+    """Afișează factura și detaliile complete ale unei comenzi trecute (Cerința R2.3).
+
+    Securitate esențială conform §6.2: filtrăm strict după `utilizator=request.user`.
+    Dacă un client încearcă să vadă comanda altcuiva introducând un alt ID în URL, primește 404.
+    """
+    comanda = get_object_or_404(
+        Comanda.objects.prefetch_related('articole', 'articole__produs'),
+        id=comanda_id,
+        utilizator=request.user
+    )
+
+    context = {
+        'comanda': comanda,
+        'articole': comanda.articole.all(),
+        'titlu': f"Detaliu Comandă #{comanda.id}",
+    }
+    return render(request, 'cumparaturi/detaliu_comanda.html', context)
+
+
+@doar_admin
+def admin_comenzi_lista(request):
+    """Panoul de administrare cu toate comenzile plasate de toți clienții (bonus demo)."""
+    comenzi_qs = Comanda.objects.select_related('utilizator', 'modalitate_livrare').order_by('-creata_la')
+
+    # Filtrare după status
+    status_selectat = request.GET.get('status', '').strip()
+    if status_selectat:
+        comenzi_qs = comenzi_qs.filter(status=status_selectat)
+
+    paginator = Paginator(comenzi_qs, 15)
+    numar_pagina = request.GET.get('pagina', 1)
+    page_obj = paginator.get_page(numar_pagina)
+
+    context = {
+        'page_obj': page_obj,
+        'comenzi': page_obj.object_list,
+        'total_comenzi': paginator.count,
+        'status_selectat': status_selectat,
+        'status_alegeri': Comanda.STATUS_ALEGERI,
+        'titlu': 'Administrare Comenzi Clienți',
+    }
+    return render(request, 'cumparaturi/admin/admin_comenzi_lista.html', context)
+
+
+@doar_admin
+def admin_comanda_status(request, comanda_id):
+    """Permite administratorului să actualizeze statusul unei comenzi (POST)."""
+    if request.method != 'POST':
+        return redirect('cumparaturi:admin_comenzi_lista')
+
+    comanda = get_object_or_404(Comanda, id=comanda_id)
+    status_nou = request.POST.get('status')
+
+    statusuri_valide = [s[0] for s in Comanda.STATUS_ALEGERI]
+    if status_nou in statusuri_valide:
+        comanda.status = status_nou
+        comanda.save()
+        messages.success(request, f"Statusul comenzii #{comanda.id} a fost schimbat în «{comanda.get_status_display()}».")
+    else:
+        messages.error(request, "Statusul specificat este invalid.")
+
+    return redirect('cumparaturi:admin_comenzi_lista')

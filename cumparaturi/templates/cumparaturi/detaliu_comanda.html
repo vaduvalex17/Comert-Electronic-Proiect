@@ -1,0 +1,166 @@
+{# cumparaturi/templates/cumparaturi/detaliu_comanda.html #}
+{# Pagina de vizualizare a unei comenzi din istoric (Cerința R2.3) #}
+{% extends "baza.html" %}
+
+{% block titlu %}Comanda #{{ comanda.id }} — Istoric{% endblock %}
+
+{% block continut %}
+<div class="container py-3">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-4 d-print-none">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cumparaturi:istoric_comenzi' %}" class="text-decoration-none">Comenzile mele</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Comanda #{{ comanda.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            {# Card Principal Factură / Comandă #}
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+                {# Antet Factură #}
+                <div class="card-header bg-dark text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <span class="badge bg-primary px-3 py-1 mb-2 fs-7 text-uppercase fw-bold">Comandă Înregistrată</span>
+                            <h1 class="h3 fw-bold mb-0">Comanda #{{ comanda.id }}</h1>
+                        </div>
+                        <div class="text-md-end">
+                            <div class="text-white-50 small">Stare actuală:</div>
+                            <span class="badge {% if comanda.status == 'livrata' %}bg-success{% elif comanda.status == 'anulata' %}bg-danger{% elif comanda.status == 'procesata' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} px-3 py-2 fs-6 mt-1">
+                                {{ comanda.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    {# Informații Generale #}
+                    <div class="row g-4 pb-4 mb-4 border-bottom">
+                        <div class="col-sm-6 col-md-3">
+                            <span class="text-muted small d-block">Data plasării:</span>
+                            <span class="fw-semibold text-dark">{{ comanda.creata_la|date:"d.m.Y, H:i" }}</span>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <span class="text-muted small d-block">Client:</span>
+                            <span class="fw-semibold text-dark">{{ comanda.utilizator.username }}</span>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <span class="text-muted small d-block">Metodă livrare:</span>
+                            <span class="fw-semibold text-dark">{{ comanda.modalitate_livrare.nume }}</span>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <span class="text-muted small d-block">Plată online:</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                Card **** {{ comanda.card_ultimele4 }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {# Informații Livrare #}
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3 h-100">
+                                <h6 class="fw-bold text-dark mb-2">
+                                    <i class="bi bi-geo-alt text-primary me-1"></i> Date Destinatar & Livrare
+                                </h6>
+                                <p class="mb-1 fw-bold text-dark">{{ comanda.nume_destinatar }}</p>
+                                <p class="mb-1 text-muted small">{{ comanda.adresa }}</p>
+                                <p class="mb-1 text-muted small">{{ comanda.oras }}, {{ comanda.judet }} ({{ comanda.cod_postal }})</p>
+                                <p class="mb-0 text-muted small">
+                                    <i class="bi bi-telephone me-1"></i>{{ comanda.telefon }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3 h-100">
+                                <h6 class="fw-bold text-dark mb-2">
+                                    <i class="bi bi-truck text-primary me-1"></i> Detalii Expediere
+                                </h6>
+                                <p class="mb-1 text-muted small">
+                                    Curier / Metodă: <span class="fw-semibold text-dark">{{ comanda.modalitate_livrare.nume }}</span>
+                                </p>
+                                <p class="mb-1 text-muted small">
+                                    Timp estimat de tranzit: <span class="fw-semibold text-dark">{{ comanda.modalitate_livrare.zile_estimate }} zile lucrătoare</span>
+                                </p>
+                                <p class="mb-0 text-muted small">
+                                    Cost transport: <span class="fw-semibold text-dark">{{ comanda.cost_livrare }} lei</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Tabel produse comandate (Snapshot istoric) #}
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-box-seam text-primary me-2"></i>Produse Comandate (Snapshot Istoric)
+                    </h5>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Denumire Produs</th>
+                                    <th class="text-center" style="width: 100px;">Cantitate</th>
+                                    <th class="text-end" style="width: 140px;">Preț la achiziție</th>
+                                    <th class="text-end" style="width: 140px;">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for linie in articole %}
+                                    <tr>
+                                        <td>
+                                            {% if linie.produs and linie.produs.activ %}
+                                                <a href="{% url 'catalog:detaliu_produs' linie.produs.slug %}" class="fw-semibold text-primary text-decoration-none">
+                                                    {{ linie.nume_produs }}
+                                                </a>
+                                            {% else %}
+                                                <span class="fw-semibold text-dark">{{ linie.nume_produs }}</span>
+                                                <span class="badge bg-light text-muted border ms-1 small">Arhivă</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ linie.cantitate }} buc.</td>
+                                        <td class="text-end">{{ linie.pret_unitar }} lei</td>
+                                        <td class="text-end fw-bold">{{ linie.subtotal }} lei</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {# Sumar Total Factură #}
+                    <div class="row justify-content-end mb-4">
+                        <div class="col-md-5">
+                            <div class="bg-light p-3 rounded-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal produse:</span>
+                                    <span class="fw-semibold text-dark">{{ comanda.subtotal_articole }} lei</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Cost transport:</span>
+                                    <span class="fw-semibold text-dark">{{ comanda.cost_livrare }} lei</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
+                                    <span>Total achitat:</span>
+                                    <span class="text-primary">{{ comanda.total }} lei</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Butoane Acțiuni #}
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3 border-top d-print-none">
+                        <a href="{% url 'cumparaturi:istoric_comenzi' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Înapoi la Comenzile mele
+                        </a>
+                        <button type="button" class="btn btn-outline-dark" onclick="window.print();">
+                            <i class="bi bi-printer me-1"></i> Printează / Salvează Factura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
