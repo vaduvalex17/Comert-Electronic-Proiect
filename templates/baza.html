@@ -45,7 +45,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="{% url 'catalog:lista_produse' %}">
                             <i class="bi bi-grid me-1"></i>Produse
                         </a>
                     </li>
@@ -55,15 +55,25 @@
                         </a>
                         <ul class="dropdown-menu shadow" aria-labelledby="categoriiDropdown">
                             <li><span class="dropdown-header">Alege o categorie</span></li>
-                            <li><a class="dropdown-item" href="#">Toate categoriile</a></li>
+                            {% for cat in categorii_meniu %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'catalog:produse_categorie' slug=cat.slug %}">
+                                        {{ cat.nume }}
+                                    </a>
+                                </li>
+                            {% empty %}
+                                <li><span class="dropdown-item text-muted">Nu există categorii</span></li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item fw-semibold" href="{% url 'catalog:lista_produse' %}">Toate produsele</a></li>
                         </ul>
                     </li>
                 </ul>
 
                 {# Formular de căutare rapidă #}
-                <form class="d-flex me-lg-3 my-2 my-lg-0" role="search" method="get" action="#">
+                <form class="d-flex me-lg-3 my-2 my-lg-0" role="search" method="get" action="{% url 'catalog:lista_produse' %}">
                     <div class="input-group">
-                        <input class="form-control" type="search" name="q" placeholder="Caută un produs..." aria-label="Căutare">
+                        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Caută un produs..." aria-label="Căutare">
                         <button class="btn btn-light text-primary" type="submit" title="Caută">
                             <i class="bi bi-search"></i>
                         </button>

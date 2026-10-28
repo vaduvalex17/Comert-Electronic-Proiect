@@ -11,8 +11,14 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 |---|---|---|---|
 | **Pornire & Configurare** | `magazin/settings.py` | Configurații generale | Setări aplicații, limbă, căi statice |
 | **Cuprins URL-uri** | `magazin/urls.py` | `urlpatterns` | Direcționarea adreselor web |
-| **Pagina Acasă** | `catalog/views.py` | `acasa()` | Afișare pagină principală |
+| **Pagina Acasă** | `catalog/views.py` | `acasa()` | Afișare pagină principală, noutăți și categorii |
+| **Catalog Produse (R1.4)** | `catalog/views.py` | `lista_produse()` | Listă produse, căutare `?q=` și paginare (12/pag) |
+| **Filtrare Categorie (R1.4)** | `catalog/views.py` | `produse_categorie()` | Răsfoirea produselor pe categorii |
+| **Detaliu Produs (R1.3)** | `catalog/views.py` | `detaliu_produs()` | Pagina completă R1.3 (specificații, stoc, furnizor) |
+| **Categorii în Navbar** | `catalog/context_processors.py` | `categorii_globale()` | Încarcă automat categoriile în meniul dropdown |
 | **Șablon de bază (HTML)** | `templates/baza.html` | Schelet HTML | Meniu, Bootstrap, mesaje flash, subsol |
+| **Card Produs (reutilizabil)**| `templates/partiale/card_produs.html` | Componentă HTML | Card cu poză, preț, badge stoc și link detaliu |
+| **Paginare (reutilizabilă)** | `templates/partiale/paginare.html` | Componentă HTML | Navigare între pagini cu menținerea filtrelor |
 | **Stiluri CSS proprii** | `static/css/stil.css` | Reguli CSS | Ajustări vizuale peste Bootstrap |
 | **Modele Catalog (R1.3)** | `catalog/models.py` | `Produs`, `Categorie`, `Furnizor`, `ModalitateLivrare` | Baza de date pentru catalogul de produse |
 | **Parsare specificații** | `catalog/models.py` | `Produs.specificatii_lista()` | Transformă textul de specificații în tabel |
@@ -29,11 +35,9 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 
 ## 2. Ghid rapid de orientare în proiect
 
-1. **Vrei să modifici formularele de autentificare sau înregistrare?** Deschide `conturi/forms.py`.
-2. **Vrei să vezi cum este protejată o pagină de admin?** Verifică decoratorul `@doar_admin` din `conturi/decoratori.py`.
-3. **Vrei să modifici structura tabelelor sau adaugi câmpuri noi?** Deschide `catalog/models.py` sau `cumparaturi/models.py`. Nu uita să rulezi `python manage.py makemigrations` și `python manage.py migrate`.
-4. **Vrei să modifici produsele din demo?** Deschide `catalog/management/commands/populeaza_date.py`.
-5. **Vrei să modifici bara de meniu sau subsolul?** Deschide `templates/baza.html`.
-6. **Vrei să schimbi culori sau spațieri?** Deschide `static/css/stil.css`.
-7. **Vrei să adaugi o rută nouă?** Deschide fișierul `urls.py` din aplicația respectivă.
-8. **Vrei să modifici logica din spatele unei pagini?** Deschide `views.py` din aplicația respectivă.
+1. **Vrei să modifici afișarea unui produs în liste?** Deschide `templates/partiale/card_produs.html`.
+2. **Vrei să modifici pagina de produs individual?** Deschide `catalog/templates/catalog/detaliu_produs.html`.
+3. **Vrei să modifici căutarea sau numărul de produse pe pagină?** Deschide `catalog/views.py` la funcția `lista_produse`.
+4. **Vrei să modifici formularele de autentificare sau înregistrare?** Deschide `conturi/forms.py`.
+5. **Vrei să vezi cum este protejată o pagină de admin?** Verifică decoratorul `@doar_admin` din `conturi/decoratori.py`.
+6. **Vrei să modifici structura tabelelor sau adaugi câmpuri noi?** Deschide `catalog/models.py` sau `cumparaturi/models.py`.

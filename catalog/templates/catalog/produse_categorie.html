@@ -1,0 +1,59 @@
+{# catalog/templates/catalog/produse_categorie.html #}
+{# Afișează produsele dintr-o anumită categorie selectată #}
+{% extends "baza.html" %}
+
+{% block titlu %}{{ categorie.nume }}{% endblock %}
+
+{% block continut %}
+<div class="container">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalog:lista_produse' %}" class="text-decoration-none">Produse</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ categorie.nume }}</li>
+        </ol>
+    </nav>
+
+    {# Antet Categorie #}
+    <div class="bg-white p-4 rounded-3 shadow-sm border mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2">Categorie</span>
+                <h1 class="h3 fw-bold mb-1">{{ categorie.nume }}</h1>
+                {% if categorie.descriere %}
+                    <p class="text-muted mb-0 small">{{ categorie.descriere }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <span class="badge bg-light text-secondary border px-3 py-2 fs-6">
+                    {{ total_rezultate }} {% if total_rezultate == 1 %}produs disponibil{% else %}produse disponibile{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Grila cu produsele din categorie #}
+    {% if produse %}
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
+            {% for produs in produse %}
+                <div class="col">
+                    {% include "partiale/card_produs.html" with produs=produs %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Paginare #}
+        {% include "partiale/paginare.html" with page_obj=page_obj %}
+    {% else %}
+        <div class="text-center py-5 bg-white rounded-3 shadow-sm border my-4">
+            <i class="bi bi-inbox text-muted opacity-50" style="font-size: 4rem;"></i>
+            <h4 class="fw-bold mt-3">Momentan nu există produse în această categorie</h4>
+            <p class="text-muted">Revino în curând sau verifică celelalte categorii din magazin.</p>
+            <a href="{% url 'catalog:lista_produse' %}" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-grid me-1"></i> Vezi toate produsele
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

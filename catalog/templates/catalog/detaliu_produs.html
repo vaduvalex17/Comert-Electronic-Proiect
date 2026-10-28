@@ -1,0 +1,202 @@
+{# catalog/templates/catalog/detaliu_produs.html #}
+{# Pagina detaliată a unui produs — acoperă cerința oficială R1.3 #}
+{% extends "baza.html" %}
+{% load static %}
+
+{% block titlu %}{{ produs.nume }}{% endblock %}
+
+{% block continut %}
+<div class="container">
+    {# Breadcrumb #}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'catalog:acasa' %}" class="text-decoration-none">Acasă</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalog:lista_produse' %}" class="text-decoration-none">Produse</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'catalog:produse_categorie' slug=produs.categorie.slug %}" class="text-decoration-none">
+                    {{ produs.categorie.nume }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page">{{ produs.nume }}</li>
+        </ol>
+    </nav>
+
+    {# Secțiunea principală: Imagine + Informații esențiale #}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+        <div class="row g-0">
+            {# Coloana stângă: Fotografia produsului #}
+            <div class="col-lg-5 p-4 d-flex align-items-center justify-content-center bg-light border-end">
+                <div class="w-100 text-center" style="max-height: 420px;">
+                    {% if produs.imagine %}
+                        <img src="{{ produs.imagine.url }}" class="img-fluid rounded-3 object-fit-contain" style="max-height: 400px;" alt="{{ produs.nume }}">
+                    {% else %}
+                        <img src="{% static 'img/produs_implicit.svg' %}" class="img-fluid rounded-3 opacity-75" style="max-height: 350px;" alt="{{ produs.nume }}">
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Coloana dreaptă: Informații de achiziție, stoc și furnizor #}
+            <div class="col-lg-7 p-4 p-md-5 d-flex flex-column justify-content-between">
+                <div>
+                    {# Categorie și Badge Admin #}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <a href="{% url 'catalog:produse_categorie' slug=produs.categorie.slug %}" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-3 py-2 rounded-pill">
+                            <i class="bi bi-tag-fill me-1"></i>{{ produs.categorie.nume }}
+                        </a>
+
+                        {% if user.is_staff %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1">
+                                <i class="bi bi-shield-lock me-1"></i>Vedere Admin
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {# Nume produs #}
+                    <h1 class="h2 fw-bold text-dark mb-3">{{ produs.nume }}</h1>
+
+                    {# Furnizor (R1.3) #}
+                    <div class="mb-3 text-muted small">
+                        <i class="bi bi-building me-1"></i>Furnizor oficial:
+                        <span class="fw-semibold text-dark">{{ produs.furnizor.nume }}</span>
+                        <span class="mx-1">•</span>
+                        <span>Contact: {{ produs.furnizor.email }}</span>
+                    </div>
+
+                    <hr class="my-3">
+
+                    {# Preț și Stoc #}
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                        <div>
+                            <span class="text-muted small d-block">Preț cu TVA inclus:</span>
+                            <span class="display-6 fw-bold text-primary">{{ produs.pret }}</span>
+                            <span class="fs-4 fw-bold text-primary">lei</span>
+                        </div>
+
+                        {# Badge pentru Stoc #}
+                        <div>
+                            {% if produs.stoc <= 0 %}
+                                <div class="badge bg-danger fs-6 px-3 py-2">
+                                    <i class="bi bi-x-circle me-1"></i> Indisponibil
+                                </div>
+                            {% elif produs.stoc <= 5 %}
+                                <div class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                    <i class="bi bi-exclamation-triangle me-1"></i> Stoc limitat (doar {{ produs.stoc }} bucăți)
+                                </div>
+                            {% else %}
+                                <div class="badge bg-success fs-6 px-3 py-2">
+                                    <i class="bi bi-check-circle me-1"></i> În stoc ({{ produs.stoc }} bucăți disponibile)
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# Descriere succintă #}
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark">Descriere produs:</h6>
+                        <p class="text-muted">{{ produs.descriere|linebreaks }}</p>
+                    </div>
+                </div>
+
+                {# Butoane de acțiune (Coș și Favorite) #}
+                <div class="pt-3 border-top">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if produs.in_stoc %}
+                            <form method="post" action="#" class="d-inline flex-grow-1">
+                                {% csrf_token %}
+                                <input type="hidden" name="produs_id" value="{{ produs.id }}">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+                                    <i class="bi bi-cart-plus me-2"></i> Adaugă în Coș
+                                </button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary btn-lg flex-grow-1" disabled>
+                                <i class="bi bi-x-circle me-2"></i> Produs indisponibil momentan
+                            </button>
+                        {% endif %}
+
+                        <form method="post" action="#" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="produs_id" value="{{ produs.id }}">
+                            <button type="submit" class="btn btn-outline-danger btn-lg px-3" title="Salvează în Favorite">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Rândul 2: Specificații tehnice complete (R1.3) + Modalități de livrare (R1.3) #}
+    <div class="row g-4 mb-5">
+        {# Specificații tehnice ca tabel #}
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white">
+                <h4 class="h5 fw-bold mb-3 d-flex align-items-center">
+                    <i class="bi bi-cpu text-primary me-2"></i> Specificații Tehnice
+                </h4>
+                {% if specificatii %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <tbody>
+                                {% for cheie, valoare in specificatii %}
+                                    <tr>
+                                        <th class="w-40 text-muted fw-semibold py-2">{{ cheie }}</th>
+                                        <td class="text-dark fw-normal py-2">{{ valoare }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted small">Nu există specificații tehnice suplimentare pentru acest produs.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Modalități de livrare disponibile (R1.3) #}
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white">
+                <h4 class="h5 fw-bold mb-3 d-flex align-items-center">
+                    <i class="bi bi-truck text-primary me-2"></i> Modalități de Livrare
+                </h4>
+                <p class="text-muted small mb-3">Opțiuni de livrare compatibile cu acest produs:</p>
+                <div class="list-group list-group-flush">
+                    {% for livrare in modalitati_livrare %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary-subtle text-primary rounded-circle p-2 me-3">
+                                    <i class="bi bi-box-seam fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark">{{ livrare.nume }}</div>
+                                    <small class="text-muted">Timp estimat: {{ livrare.zile_estimate }} {% if livrare.zile_estimate == 1 %}zi lucrătoare{% else %}zile lucrătoare{% endif %}</small>
+                                </div>
+                            </div>
+                            <span class="fw-bold {% if livrare.cost == 0 %}text-success{% else %}text-primary{% endif %}">
+                                {% if livrare.cost == 0 %}Gratuit{% else %}{{ livrare.cost }} lei{% endif %}
+                            </span>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted small">Nu sunt specificate modalități de livrare speciale.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Produse similare #}
+    {% if produse_similare %}
+        <div class="mb-5">
+            <h4 class="h5 fw-bold mb-3">Produse similare din categoria {{ produs.categorie.nume }}</h4>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+                {% for similar in produse_similare %}
+                    <div class="col">
+                        {% include "partiale/card_produs.html" with produs=similar %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
