@@ -12,3 +12,7 @@ Dicționar de noțiuni utilizate în proiect, explicate în cuvinte simple:
 - **Tranzacție atomică (`transaction.atomic`):** O operațiune de tip „totul sau nimic”: dacă la plasarea comenzii scade stocul dar plata eșuează, toate modificările din baza de date sunt anulate automat pentru a nu lăsa date corupte.
 - **Soft-delete:** O tehnică prin care o înregistrare nu este ștearsă definitiv de pe disc, ci este doar marcată ca inactivă (`activ=False`), pentru a păstra integritatea istoricului comenzilor.
 - **FBV (Function-Based View):** O funcție Python simplă care primește o cerere de la browser (`request`) și returnează un răspuns (de obicei o pagină HTML compilată).
+- **Algoritmul Luhn (Mod 10):** Formula matematică de control utilizată la nivel global pentru validarea structurală a numerelor de carduri bancare (Visa, Mastercard etc.).
+- **IDOR (Insecure Direct Object Reference):** Vulnerabilitate de securitate în care un utilizator ar putea accesa resursele altui utilizator prin simpla modificare a ID-ului din URL. În proiect, comanda este protejată strict prin `utilizator=request.user`, returnând `404 Not Found`.
+- **Cumpărător Verificat (Verified Purchase):** Sistem de recenzii în care doar utilizatorii care au comandat și achiziționat produsul au permisiunea de a acorda o notă (1-5 stele) și a lăsa un comentariu.
+- **Context Processor:** Funcție Django care injectează automat variabile globale (ex: numărul de produse din coș, numărul de favorite) în contextul fiecărui șablon HTML randat pe site.

@@ -24,11 +24,26 @@ După pornire, deschide browserul la adresa: **[http://127.0.0.1:8000](http://12
 
 ---
 
-## 👤 Conturi demonstrative (după Faza 1)
+## 👤 Conturi demonstrative (Gata create)
 
 Pentru testare și prezentare sunt create automat două conturi:
-- **Administrator:** utilizator `admin` / parolă `admin123` (acces la CRUD produse și administrare)
-- **Client:** utilizator `client` / parolă `client123` (cumpărături, favorite, comenzi)
+- **Administrator:** utilizator `admin` / parolă `admin123` (acces la CRUD produse, gestiune comenzi, dashboard statistici)
+- **Client:** utilizator `client` / parolă `client123` (cumpărături, favorite, checkout card Luhn, istoric comenzi, recenzii)
+
+### 🏷️ Coduri Promoționale Demo (Cupoane):
+- `GAMING10`: 10% reducere fără limită minimă
+- `ELECTRO20`: 20% reducere pentru comenzi de minimum 1000 lei
+- `STUDENT15`: 15% reducere pentru comenzi de minimum 200 lei
+
+---
+
+## 🧪 Teste Automate
+
+Proiectul conține o suită extinsă de **69 de teste automate** care verifică integritatea modelelor, securitatea IDOR (404), algoritmul Luhn, tranzacția atomică ACID la finalizare și operatorii logici ȘI/SAU:
+
+```bash
+./venv/bin/python manage.py test
+```
 
 ---
 

@@ -63,6 +63,18 @@ Entitatea centrală a magazinului online.
 - `specificatii_lista()`: Transformă textul pe linii în perechi `[('Procesor', 'Intel i7'), ...]`.
 - `in_stoc`: Returnează `True` dacă `stoc > 0`.
 - `stare_stoc`: Returnează `"În stoc"`, `"Stoc limitat"` (dacă $\le 5$ bucăți) sau `"Indisponibil"` (dacă $0$).
+- `medie_rating`: Calculează media notelor primite (1.0 - 5.0) sau `0` dacă nu are recenzii.
+- `numar_recenzii`: Numărul total de recenzii acordate produsului.
+
+### 2.5 Modelul `Recenzie` (Bonus Faza 9)
+- `produs` (`ForeignKey` la `Produs`, `CASCADE`).
+- `utilizator` (`ForeignKey` la `User`, `CASCADE`).
+- `rating` (`PositiveSmallIntegerField`, 1-5 stele).
+- `titlu` (`CharField`, max 150 caractere).
+- `comentariu` (`TextField`).
+- `creata_la` (`DateTimeField`).
+- Constrângere unică `(produs, utilizator)`: un utilizator poate lăsa o singură recenzie per produs.
+- **Regulă de aur:** adăugarea este permisă strict dacă utilizatorul a cumpărat produsul (`ArticolComanda`).
 
 ---
 
@@ -86,7 +98,7 @@ Entitatea centrală a magazinului online.
 - `creata_la` (`DateTimeField`): Data și ora plasării comenzii.
 - `status`: Starea comenzii (`plasata`, `in_procesare`, `livrata`, `anulata`).
 - Date de expediere: `nume_destinatar`, `telefon`, `adresa`, `oras`, `judet`, `cod_postal`.
-- Financiar: `modalitate_livrare` (`ForeignKey`), `cost_livrare`, `subtotal`, `total`.
+- Financiar: `modalitate_livrare` (`ForeignKey`), `cost_livrare`, `subtotal`, `cod_reducere` (FK la `CodReducere`, nullable), `valoare_reducere`, `total`.
 - Plată: `card_ultimele4` (stochează doar ultimele 4 cifre ale cardului; codul CVV și numărul complet **nu se salvează niciodată**).
 
 ### 3.4 Modelul `ArticolComanda` (Snapshot comandă)
@@ -96,6 +108,14 @@ Entitatea centrală a magazinului online.
 - `pret_unitar` (`DecimalField`): Prețul exact din momentul plasării comenzii.
 - `cantitate` (`PositiveIntegerField`).
 - `subtotal`: `pret_unitar * cantitate`.
+
+### 3.5 Modelul `CodReducere` (Cupoane promoționale - Bonus Faza 9)
+- `cod` (`CharField`, max 30, unique, salvat cu majuscule).
+- `procent_reducere` (`PositiveIntegerField`, 1-100%).
+- `valoare_minima_comanda` (`DecimalField`, default 0).
+- `activ` (`BooleanField`, default True).
+- `data_expirare` (`DateField`, opțional).
+- Metode: `este_valid(suma)`, `calculeaza_reducere(suma)`.
 
 ---
 
