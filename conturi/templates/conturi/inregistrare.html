@@ -1,0 +1,44 @@
+{# conturi/templates/conturi/inregistrare.html #}
+{# Pagina de înregistrare a unui cont nou de client #}
+{% extends "baza.html" %}
+
+{% block titlu %}Înregistrare cont nou{% endblock %}
+
+{% block continut %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="avatar-icon bg-success-subtle text-success rounded-circle d-inline-flex p-3 mb-2">
+                            <i class="bi bi-person-plus-fill fs-2"></i>
+                        </div>
+                        <h2 class="h4 fw-bold">Creare Cont Nou</h2>
+                        <p class="text-muted small">Creează-ți un cont pentru a comanda rapid și a salva produse favorite</p>
+                    </div>
+
+                    <form method="post" action="{% url 'conturi:inregistrare' %}">
+                        {% csrf_token %}
+
+                        {% include "partiale/formular.html" %}
+
+                        <button type="submit" class="btn btn-success w-100 py-2 mt-3 fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Înregistrează-te
+                        </button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-muted small mb-0">
+                            Ai deja un cont?
+                            <a href="{% url 'conturi:login' %}" class="fw-semibold text-decoration-none">Autentifică-te aici</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
