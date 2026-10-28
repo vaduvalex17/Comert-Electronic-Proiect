@@ -2,10 +2,11 @@
 cumparaturi/context_processors.py
 
 Context processor pentru coșul de cumpărături și lista de favorite:
-- Calculează numărul de articole din coș afișat în meniul site-ului (baza.html)
+- Calculează numărul total de unități din coș afișat în meniul site-ului (baza.html)
 - Furnizează ID-urile produselor favorite pentru evidențierea inimilor pe carduri
 """
 
+from django.db.models import Sum
 from .models import ArticolCos, Favorit
 
 
@@ -18,8 +19,10 @@ def cumparaturi_meniu(request):
             'utilizator_favorite_ids': set(),
         }
 
-    # Pasul 1: Numărăm produsele din coș (suma cantităților sau numărul de poziții)
-    numar_articole = ArticolCos.objects.filter(utilizator=request.user).count()
+    # Pasul 1: Numărăm totalul unităților din coș (suma cantităților)
+    total_bucati_cos = ArticolCos.objects.filter(
+        utilizator=request.user
+    ).aggregate(total=Sum('cantitate'))['total'] or 0
 
     # Pasul 2: Preluăm id-urile produselor din favorite pentru evidențiere pe carduri
     favorite_ids = set(
@@ -27,7 +30,7 @@ def cumparaturi_meniu(request):
     )
 
     return {
-        'numar_articole_cos': numar_articole,
+        'numar_articole_cos': total_bucati_cos,
         'numar_favorite': len(favorite_ids),
         'utilizator_favorite_ids': favorite_ids,
     }

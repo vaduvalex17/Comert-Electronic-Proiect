@@ -93,9 +93,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link position-relative me-lg-2" href="#" title="Coșul de cumpărături">
+                            <a class="nav-link position-relative me-lg-2" href="{% url 'cumparaturi:vizualizare_cos' %}" title="Coșul de cumpărături">
                                 <i class="bi bi-cart3 me-1"></i>Coș
-                                <span class="badge bg-danger rounded-pill">0</span>
+                                {% if numar_articole_cos > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ numar_articole_cos }}</span>
+                                {% endif %}
                             </a>
                         </li>
 

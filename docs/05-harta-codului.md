@@ -23,6 +23,10 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 | **Lista Favorite / Wishlist (R2.1)**| `cumparaturi/views.py` | `lista_favorite()` | Vizualizare produse salvate de client |
 | **Toggle Favorit (POST) (R2.1)**| `cumparaturi/views.py` | `adauga_elimina_favorit()`| Adăugare/eliminare cu inimă pe card sau detaliu |
 | **Mută în coș (R2.1)** | `cumparaturi/views.py` | `muta_in_cos()` | Mutare produs din favorite în coșul activ |
+| **Coș de cumpărături (R2.2)** | `cumparaturi/views.py` | `vizualizare_cos()` | Sumar coș, subtotal, intersecție livrări, total |
+| **Adăugare în coș (R2.2)** | `cumparaturi/views.py` | `adaugare_in_cos()` | Adăugare produs cu plafonare la stoc |
+| **Modificare cantitate (R2.2)**| `cumparaturi/views.py` | `actualizeaza_cos()` | Actualizare cantitate sau ștergere dacă e 0 |
+| **Eliminare din coș (R2.2)** | `cumparaturi/views.py` | `elimina_din_cos()` | Ștergere articol din coșul clientului |
 | **Contoare Coș & Favorite** | `cumparaturi/context_processors.py` | `cumparaturi_meniu()` | Calculează insignele numerice din meniul de sus |
 | **Categorii în Navbar** | `catalog/context_processors.py` | `categorii_globale()` | Încarcă automat categoriile în meniul dropdown |
 | **Șablon de bază (HTML)** | `templates/baza.html` | Schelet HTML | Meniu, Bootstrap, mesaje flash, subsol |
@@ -44,8 +48,8 @@ Tabelul de mai jos mapează fiecare funcționalitate pe fișierele și funcțiil
 
 ## 2. Ghid rapid de orientare în proiect
 
-1. **Vrei să modifici lista de favorite (Wishlist)?** Deschide `cumparaturi/templates/cumparaturi/favorite.html` și `cumparaturi/views.py`.
-2. **Vrei să modifici butonul de inimă?** Deschide `templates/partiale/card_produs.html` sau `catalog/templates/catalog/detaliu_produs.html`.
-3. **Vrei să modifici panoul de administrare produse?** Deschide `catalog/views_admin.py` și `catalog/templates/catalog/admin/`.
-4. **Vrei să modifici căutarea sau paginarea?** Deschide `catalog/views.py`.
-5. **Vrei să modifici formularele de conturi?** Deschide `conturi/forms.py`.
+1. **Vrei să modifici logica coșului sau a sumarului?** Deschide `cumparaturi/views.py` la `vizualizare_cos`.
+2. **Vrei să vezi cum se calculează intersecția metodelor de livrare?** Verifică pasul 3 din `vizualizare_cos` în `cumparaturi/views.py`.
+3. **Vrei să modifici lista de favorite (Wishlist)?** Deschide `cumparaturi/templates/cumparaturi/favorite.html`.
+4. **Vrei să modifici panoul de administrare produse?** Deschide `catalog/views_admin.py`.
+5. **Vrei să modifici căutarea sau paginarea?** Deschide `catalog/views.py`.
