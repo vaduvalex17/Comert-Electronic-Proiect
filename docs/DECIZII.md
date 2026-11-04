@@ -80,3 +80,11 @@ Toate deciziile de arhitectură, convențiile alese și eventualele abateri just
   - Produsele fără poză afișează o ilustrație a categoriei lor (`static/img/categorii/`, proprietatea `Produs.imagine_implicita`).
   - În datele demo, laptopul ASUS ROG, soundbar-ul Samsung și monitorul LG nu au livrare prin Easybox.
 - **Motivație:** Catalogul arată mai bine fără să folosim fotografii protejate de drepturi de autor. Intersecția livrărilor din coș se poate demonstra concret la prezentare.
+
+---
+
+## Decizia 11: `pornire.bat` instalează Python și deschide singur browserul
+- **Data:** Noiembrie 2026
+- **Context:** Colegul care prezintă nu are experiență tehnică. Pașii manuali (instalarea Python cu „Add python.exe to PATH”, scrierea adresei în browser) erau cele mai probabile surse de blocaj.
+- **Decizie:** Pe Windows, scriptul caută Python 3.10+ (`py`, `python`, folderul implicit de instalare) și, dacă lipsește, îl instalează cu `winget` doar pentru utilizatorul curent. Alege primul port liber începând cu 8000 și deschide browserul când serverul răspunde.
+- **Motivație:** Pornirea devine un singur dublu click. Aplicația în sine nu se schimbă: modificarea privește doar scriptul de pornire.

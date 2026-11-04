@@ -35,7 +35,7 @@ Aplicația pornește cu **o singură comandă**, care instalează tot ce trebuie
 Ai nevoie doar de **[Python 3.12 sau mai nou](https://www.python.org/downloads/)**.
 
 > [!IMPORTANT]
-> **Pe Windows**, în primul ecran al instalării Python bifează căsuța **„Add python.exe to PATH”**. Fără ea, scriptul de pornire nu găsește Python.
+> **Pe Windows nu instalezi nimic de mână:** dacă Python lipsește, `pornire.bat` îl instalează singur (are nevoie de internet). Doar dacă instalarea automată nu e posibilă, se deschide python.org: acolo bifează căsuța **„Add python.exe to PATH”** la instalare.
 
 ### 2. Descarcă proiectul
 
@@ -56,14 +56,14 @@ cd Comert-Electronic-Proiect
 
 Scriptul face automat cei 4 pași (prima pornire durează 1-2 minute):
 
-1. creează mediul virtual Python (`venv/`);
+1. creează mediul virtual Python (`venv/`) — pe Windows, instalează înainte Python dacă lipsește;
 2. instalează dependențele din `requirements.txt`;
 3. creează baza de date și încarcă datele demo;
-4. pornește serverul.
+4. pornește serverul pe un port liber și, pe Windows, deschide singur browserul.
 
 ### 4. Deschide magazinul
 
-Când în fereastră apare mesajul de pornire, intră în browser la:
+Pe Windows, magazinul se deschide singur în browser. Altfel, când în fereastră apare mesajul de pornire, intră în browser la:
 
 <div align="center">
 
@@ -210,9 +210,10 @@ venv\Scripts\python manage.py test      # Windows
 
 | Problemă | Soluție |
 |---|---|
-| „Python nu a fost găsit” / fereastra se închide imediat | Reinstalează Python cu **„Add python.exe to PATH”** bifat, apoi repornește calculatorul |
+| „Python s-a instalat. Inchide aceasta fereastra...” | Închide fereastra și dă din nou dublu click pe `pornire.bat` |
+| Se deschide pagina python.org | Instalează Python cu **„Add python.exe to PATH”** bifat, apoi pornește din nou scriptul |
 | „Windows protected your PC” | Apasă **More info → Run anyway** |
-| `Port 8000 already in use` | Serverul rulează deja în altă fereastră. Închide-o și pornește din nou |
+| „Portul 8000 este ocupat” | Scriptul alege singur portul următor; închide fereastra veche ca să nu ai două servere pornite |
 | Pagina nu se încarcă | Verifică dacă fereastra scriptului e încă deschisă |
 | Vreau datele demo de la zero | Oprește serverul, șterge `db.sqlite3` și pornește din nou scriptul |
 
